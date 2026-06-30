@@ -43,7 +43,7 @@ html, body {
   height: 70px;
   display: flex; align-items: center; gap: 32px; padding: 0 48px;
   background: linear-gradient(to bottom, rgba(10,10,15,0.98) 60%, transparent);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(6px);
   transition: background var(--trans);
 }
 
@@ -84,15 +84,24 @@ html, body {
 }
 
 #search-btn {
-  width: 42px; height: 42px; border-radius: 50%;
-  background: var(--bg3); border: 1px solid rgba(201,168,76,0.2);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)), var(--bg3);
+  border: 1px solid rgba(201,168,76,0.25);
   color: var(--text-dim); font-size: 1.1rem;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all var(--trans); outline: none; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
 }
+#search-btn svg { width: 19px; height: 19px; stroke: currentColor; transition: transform var(--trans); }
+#search-btn:hover {
+  border-color: rgba(201,168,76,0.55); color: var(--gold);
+  background: linear-gradient(145deg, rgba(201,168,76,0.14), rgba(255,255,255,0.02)), var(--bg3);
+}
+#search-btn:hover svg { transform: scale(1.08); }
 #search-btn:focus, #search-btn.focused {
-  color: var(--gold); border-color: var(--gold);
-  box-shadow: var(--focus-ring);
+  color: var(--bg); background: var(--gold); border-color: var(--gold);
+  box-shadow: var(--focus-ring), 0 0 18px rgba(201,168,76,0.45);
+  transform: scale(1.06);
 }
 
 /* ===== MAIN ===== */
@@ -202,12 +211,10 @@ html, body {
   border-radius: 10px; overflow: visible;
   cursor: pointer; outline: none !important;
   transition: transform var(--trans), box-shadow var(--trans);
-  will-change: transform;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
 }
 .card:focus, .card.focused {
-  transform: scale(1.08);
+  transform: scale(1.08) translateZ(0);
+  will-change: transform;
   box-shadow: var(--focus-ring), 0 16px 48px rgba(0,0,0,0.8);
   z-index: 10;
 }
@@ -409,13 +416,71 @@ html, body {
 }
 #player-next-btn.disabled { opacity: 0.35; pointer-events: none; }
 
-#player-vol-wrap { display: flex; align-items: center; gap: 8px; margin-right: auto; }
-#player-vol { font-size: 0.85rem; color: var(--text-dim); min-width: 38px; font-variant-numeric: tabular-nums; }
-#player-vol-track {
-  width: 70px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2);
-  position: relative; overflow: hidden;
+#player-skip-intro-btn {
+  display: none;
+  position: absolute;
+  right: 40px;
+  bottom: 130px;
+  z-index: 11;
+  width: auto;
+  height: auto;
+  padding: 12px 22px;
+  border-radius: 8px;
+  background: rgba(20,20,20,0.78);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s, transform 0.15s, opacity 0.2s;
 }
-#player-vol-fill { height: 100%; background: var(--gold); width: 100%; }
+#player-skip-intro-btn.visible { display: block; opacity: 1; animation: skipIntroIn 0.25s ease; }
+#player-skip-intro-btn:hover { background: rgba(40,40,40,0.9); }
+#player-skip-intro-btn:focus, #player-skip-intro-btn.focused {
+  background: var(--gold); color: #111; border-color: var(--gold);
+  box-shadow: var(--focus-ring); transform: scale(1.05); outline: none;
+}
+@keyframes skipIntroIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#player-vol-wrap {
+  display: flex; align-items: center; gap: 10px; margin-right: auto;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 30px;
+  padding: 6px 16px 6px 6px;
+  backdrop-filter: blur(6px);
+  transition: background var(--trans), border-color var(--trans);
+}
+#player-vol-wrap:hover { background: rgba(255,255,255,0.1); border-color: rgba(201,168,76,0.3); }
+#player-mute-btn { width: 40px; height: 40px; font-size: 1.05rem; }
+#player-vol { font-size: 0.8rem; color: var(--text-dim); min-width: 34px; font-variant-numeric: tabular-nums; text-align: right; }
+#player-vol-track {
+  width: 80px; height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.16);
+  position: relative; overflow: visible;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+#player-vol-fill {
+  height: 100%; border-radius: 3px; width: 100%;
+  background: linear-gradient(90deg, #a8843a, var(--gold));
+  position: relative;
+  box-shadow: 0 0 8px rgba(201,168,76,0.55);
+  transition: width 0.1s linear;
+}
+#player-vol-fill::after {
+  content: '';
+  position: absolute; top: 50%; right: -5px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(201,168,76,0.9), 0 0 8px rgba(201,168,76,0.7);
+  transform: translateY(-50%);
+}
 
 .ctrl-hint {
   font-size: 0.72rem; color: var(--text-dim);
@@ -577,7 +642,7 @@ html, body {
     <button class="cat-btn" data-cat="drama">Drama</button>
     <button class="cat-btn" data-cat="fantasia">Fantasía</button>
   </div>
-  <button id="search-btn" title="Buscar">🔍</button>
+  <button id="search-btn" title="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
 </div>
 
 <!-- MAIN -->
@@ -611,6 +676,7 @@ html, body {
     <video id="player-video" preload="metadata"></video>
     <iframe id="player-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
     <div id="player-spinner"></div>
+    <button class="player-btn" id="player-skip-intro-btn" tabindex="0" title="Saltar intro">Saltar intro ⏭</button>
 
     <div id="player-topbar">
       <button class="player-btn" id="player-close-btn" tabindex="0" title="Cerrar (Back)">←</button>
@@ -638,11 +704,6 @@ html, body {
         <button class="player-btn" id="player-forward-btn" tabindex="0" title="Adelantar 10s">⏩</button>
         <button class="player-btn" id="player-next-btn" tabindex="0" title="Siguiente capítulo">Siguiente ⏭</button>
         <button class="player-btn" id="player-fullscreen-btn" tabindex="0" title="Pantalla completa">⛶</button>
-        <div class="ctrl-hint">
-          <span><kbd>◀▶</kbd> Navegar</span>
-          <span><kbd>↵</kbd> Seleccionar</span>
-          <span><kbd>⌫</kbd> Cerrar</span>
-        </div>
       </div>
     </div>
   </div>
@@ -918,6 +979,22 @@ const State = {
   searchQuery: '',
   searchDebounceTimer: null,
   hls: null,
+  // --- Detección automática de intro ---
+  introCache: {},           // url -> { end: segundos } detectado o por defecto
+  introAudioCtx: null,
+  introSourceNode: null,
+  introAnalyser: null,
+  introDataArr: null,
+  introRAF: null,
+  introWatchRAF: null,
+  introPhase: 'idle',       // idle | waiting-loud | waiting-quiet | confirming | done
+  introPhaseSince: 0,
+  introWindowEnd: 0,
+  introTargetTime: 0,
+  introBtnVisible: false,
+  introPrevFocusEl: null,
+  introUrl: null,
+  playerEntryScrollTop: 0,
 };
 
 // Focus navigation groups (ordered for spatial navigation)
@@ -1918,7 +1995,218 @@ function playNextEpisode() {
   );
 }
 
+// ========================
+// DETECCIÓN AUTOMÁTICA DE INTRO
+// ========================
+// Estrategia: analizamos el audio en tiempo real con Web Audio API mientras
+// el video reproduce los primeros minutos. Buscamos el patrón típico de una
+// intro: un tramo "fuerte" (música/tema de apertura) seguido de un breve
+// silencio/caída de volumen y luego el contenido real retomando el audio.
+// Ese punto de "retoma" se marca como fin de intro. Si no se detecta nada
+// (audio bloqueado por CORS, contenido sin patrón claro, etc.) se usa un
+// salto por defecto razonable según el tipo de contenido, para que el botón
+// siempre sea útil.
+function getIntroConfig(context, item) {
+  const isEpisodic = !!(context && context.parentItem); // serie / anime
+  if (isEpisodic) {
+    // Series y anime: la intro suele estar entre el seg. 0 y ~2:10
+    return { scanWindow: 130, fallback: 85, minLoudMs: 1200, quietMs: 500 };
+  }
+  // Películas: solo logos de estudio / cortinilla inicial, ventana corta
+  return { scanWindow: 55, fallback: 30, minLoudMs: 900, quietMs: 400 };
+}
+
+function ensureIntroAudioGraph(video) {
+  if (State.introSourceNode) return true; // ya conectado a este <video>
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+    if (!State.introAudioCtx) State.introAudioCtx = new Ctx();
+    State.introSourceNode = State.introAudioCtx.createMediaElementSource(video);
+    State.introAnalyser = State.introAudioCtx.createAnalyser();
+    State.introAnalyser.fftSize = 1024;
+    State.introDataArr = new Uint8Array(State.introAnalyser.frequencyBinCount);
+    State.introSourceNode.connect(State.introAnalyser);
+    State.introAnalyser.connect(State.introAudioCtx.destination);
+    return true;
+  } catch (e) {
+    // Si falla (p.ej. ya conectado por otra vía), seguimos sin análisis de audio
+    return false;
+  }
+}
+
+function getRMS() {
+  if (!State.introAnalyser) return 0;
+  State.introAnalyser.getByteTimeDomainData(State.introDataArr);
+  let sum = 0;
+  for (let i = 0; i < State.introDataArr.length; i++) {
+    const v = (State.introDataArr[i] - 128) / 128;
+    sum += v * v;
+  }
+  return Math.sqrt(sum / State.introDataArr.length);
+}
+
+function stopIntroDetection() {
+  if (State.introRAF) { cancelAnimationFrame(State.introRAF); State.introRAF = null; }
+  if (State.introWatchRAF) { cancelAnimationFrame(State.introWatchRAF); State.introWatchRAF = null; }
+  State.introPhase = 'idle';
+}
+
+function resetIntroUI() {
+  stopIntroDetection();
+  hideSkipIntroBtn();
+  State.introTargetTime = 0;
+  State.introWindowEnd = 0;
+}
+
+// Vigía permanente: mientras el botón esté visible, lo oculta automáticamente
+// en cuanto el video pasa el punto objetivo (que puede irse afinando en vivo).
+function watchSkipBtn(video) {
+  const tick = () => {
+    if (!State.playerVisible || !State.introBtnVisible) { State.introWatchRAF = null; return; }
+    if (video.currentTime >= State.introTargetTime || video.currentTime > State.introWindowEnd) {
+      hideSkipIntroBtn();
+      return;
+    }
+    State.introWatchRAF = requestAnimationFrame(tick);
+  };
+  State.introWatchRAF = requestAnimationFrame(tick);
+}
+
+function startIntroDetection(video, url, context, item) {
+  resetIntroUI();
+  State.introUrl = url;
+  const cfg = getIntroConfig(context, item);
+  State.introWindowEnd = cfg.scanWindow;
+
+  // Punto de partida: lo ya detectado/aplicado antes para esta URL, o el valor
+  // por defecto según tipo de contenido. El botón se muestra YA con esta
+  // estimación; si luego detectamos el silencio real, se afina en caliente.
+  const startingTarget = State.introCache[url] != null ? State.introCache[url] : cfg.fallback;
+  State.introTargetTime = startingTarget;
+  if (startingTarget > 0) {
+    showSkipIntroBtn();
+    watchSkipBtn(video);
+  }
+
+  // Si ya teníamos un valor confirmado en caché, no hace falta re-analizar audio
+  if (State.introCache[url] != null) return;
+
+  const audioOk = ensureIntroAudioGraph(video);
+  if (State.introAudioCtx && State.introAudioCtx.state === 'suspended') {
+    State.introAudioCtx.resume().catch(() => {});
+  }
+  if (!audioOk) {
+    State.introCache[url] = cfg.fallback;
+    return;
+  }
+
+  State.introPhase = 'waiting-loud';
+  State.introPhaseSince = video.currentTime;
+
+  const LOUD = 0.05;
+  const QUIET = 0.018;
+
+  const step = () => {
+    if (!State.playerVisible || State.introUrl !== url) { State.introRAF = null; return; }
+    if (video.paused || video.ended) {
+      State.introRAF = requestAnimationFrame(step);
+      return;
+    }
+    const t = video.currentTime;
+    if (t > cfg.scanWindow) {
+      // No se encontró un patrón claro dentro de la ventana: nos quedamos con el valor por defecto
+      if (State.introCache[url] == null) State.introCache[url] = cfg.fallback;
+      stopIntroDetection();
+      return;
+    }
+
+    const rms = getRMS();
+
+    if (State.introPhase === 'waiting-loud') {
+      if (rms >= LOUD) {
+        if (t - State.introPhaseSince >= cfg.minLoudMs / 1000) {
+          State.introPhase = 'waiting-quiet';
+          State.introPhaseSince = t;
+        }
+      } else {
+        State.introPhaseSince = t;
+      }
+    } else if (State.introPhase === 'waiting-quiet') {
+      if (rms < QUIET) {
+        State.introPhaseSince = t;
+        State.introPhase = 'confirming';
+      }
+    } else if (State.introPhase === 'confirming') {
+      if (rms < QUIET) {
+        if (t - State.introPhaseSince >= cfg.quietMs / 1000) {
+          // El silencio se sostuvo: el contenido real empieza justo ahora
+          finalizeIntroEnd(url, t, video);
+          return;
+        }
+      } else {
+        // El audio volvió a subir antes de confirmar silencio sostenido: seguimos esperando otro hueco
+        State.introPhase = 'waiting-loud';
+        State.introPhaseSince = t;
+      }
+    }
+
+    State.introRAF = requestAnimationFrame(step);
+  };
+  State.introRAF = requestAnimationFrame(step);
+}
+
+function finalizeIntroEnd(url, time, video) {
+  stopIntroDetection();
+  const end = Math.round(time);
+  State.introCache[url] = end;
+  if (State.introUrl === url) {
+    // Afinamos el objetivo en caliente; si el botón ya estaba visible sigue
+    // estándolo (o se oculta de inmediato si ya pasamos el nuevo punto).
+    State.introTargetTime = end;
+    if (video.currentTime >= end) {
+      hideSkipIntroBtn();
+    } else if (!State.introBtnVisible) {
+      showSkipIntroBtn();
+      watchSkipBtn(video);
+    }
+  }
+}
+
+function showSkipIntroBtn() {
+  if (State.introBtnVisible) return;
+  State.introBtnVisible = true;
+  const btn = qs('#player-skip-intro-btn');
+  btn.classList.add('visible');
+  if (!ZONES.player.includes(btn)) ZONES.player.splice(1, 0, btn);
+}
+
+function hideSkipIntroBtn() {
+  State.introBtnVisible = false;
+  const btn = qs('#player-skip-intro-btn');
+  btn.classList.remove('visible');
+  const idx = ZONES.player.indexOf(btn);
+  if (idx !== -1) ZONES.player.splice(idx, 1);
+  if (State.currentFocusEl === btn) {
+    focus(qs('#player-playpause-btn'));
+  }
+}
+
+function skipIntro() {
+  const video = qs('#player-video');
+  if (!State.introTargetTime) return;
+  try { video.currentTime = State.introTargetTime; } catch (e) {}
+  hideSkipIntroBtn();
+  focus(qs('#player-playpause-btn'));
+}
+
 function openPlayer(item, context) {
+  if (!State.playerVisible) {
+    // Guardamos dónde estaba el usuario en el catálogo SOLO al entrar por
+    // primera vez (no al pasar de un episodio a otro), para volver ahí
+    // exactamente al cerrar el reproductor.
+    State.playerEntryScrollTop = qs('#main').scrollTop;
+  }
   State.playerItem = item;
   State.playerContext = context || null;
   State.playerVisible = true;
@@ -1932,6 +2220,8 @@ function openPlayer(item, context) {
 
   qs('#info-overlay').classList.remove('visible');
   State.infoVisible = false;
+
+  resetIntroUI();
 
   const video = qs('#player-video');
   const iframe = qs('#player-iframe');
@@ -2011,10 +2301,18 @@ function openPlayer(item, context) {
   ];
   focus(qs('#player-playpause-btn'));
   showControls();
+
+  // Se inicia DESPUÉS de fijar ZONES.player para que, si el botón de saltar
+  // intro se muestra de inmediato, quede correctamente insertado en la lista
+  // de navegación del mando a distancia (y no se pierda al reconstruirla).
+  if (isMP4 || isM3U8) {
+    startIntroDetection(video, url, context, item);
+  }
 }
 
 function closePlayer() {
   State.playerVisible = false;
+  resetIntroUI();
   const video = qs('#player-video');
   // Guardar la posición exacta antes de limpiar el video
   recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
@@ -2029,8 +2327,15 @@ function closePlayer() {
   clearTimeout(State.controlsTimer);
   // Refrescar catálogo para que "Seguir viendo" muestre el progreso actualizado
   render();
+  const main = qs('#main');
   const lastCard = ZONES.catalog.find(c => c.dataset.title === finishedTitle);
-  if (lastCard) focus(lastCard); else if (ZONES.catalog[0]) focus(ZONES.catalog[0]);
+  if (lastCard) focusSilently(lastCard); else if (ZONES.catalog[0]) focusSilently(ZONES.catalog[0]);
+  // Volver exactamente a donde estaba el usuario antes de entrar al reproductor
+  // (en vez de saltar arriba, al hero). Se hace en doble paso porque el
+  // re-render puede recortar momentáneamente la altura del catálogo y el
+  // navegador "clampea" el scroll antes de que termine de pintar todo.
+  main.scrollTop = State.playerEntryScrollTop || 0;
+  requestAnimationFrame(() => { main.scrollTop = State.playerEntryScrollTop || 0; });
 }
 
 function bindVideoEvents(video) {
@@ -2234,6 +2539,19 @@ function focus(el) {
   }
 }
 
+// Igual que focus(), pero sin mover el scroll de la página (ni el de la fila
+// de tarjetas). Se usa al cerrar el reproductor para no "saltar" fuera de la
+// posición donde el usuario estaba navegando.
+function focusSilently(el) {
+  if (!el) return;
+  if (State.currentFocusEl) {
+    State.currentFocusEl.classList.remove('focused');
+  }
+  State.currentFocusEl = el;
+  el.classList.add('focused');
+  el.focus({ preventScroll: true });
+}
+
 // ========================
 // KEYBOARD NAVIGATION
 // ========================
@@ -2289,6 +2607,7 @@ function bindGlobal() {
     playNextEpisode();
     showControls();
   });
+  qs('#player-skip-intro-btn').addEventListener('activate', skipIntro);
   qs('#player-fullscreen-btn').addEventListener('activate', () => {
     const wrap = qs('#player-video-wrap');
     if (!document.fullscreenElement) {
