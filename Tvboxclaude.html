@@ -258,6 +258,16 @@ html, body {
   font-size: 1.2rem; color: #000;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
+.card-watched-time {
+  position: absolute; right: 8px; bottom: 10px; z-index: 5;
+  background: rgba(0,0,0,0.75); color: #fff;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.3px;
+  padding: 2px 7px; border-radius: 5px;
+}
+.card-title-label {
+  margin-top: 8px; font-size: 0.85rem; color: var(--text-dim, #b8b8c2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .card-title { display: none; }
 
 /* TOP 10 */
@@ -1582,7 +1592,19 @@ function buildCard(item, type, idx) {
   img.src = item.i || '';
   img.alt = item.t;
   img.loading = 'lazy';
-  img.onerror = () => { wrap.style.background = '#1a1a24'; };
+
+  // Fallback texto (se muestra si la imagen no carga o no hay URL)
+  const fallback = el('div', 'card-logo-fallback');
+  fallback.textContent = item.t;
+  fallback.style.display = 'none';
+
+  const showFallback = () => {
+    img.style.display = 'none';
+    wrap.style.background = '#1a1a24';
+    fallback.style.display = 'block';
+  };
+  img.onerror = showFallback;
+  if (!item.i) showFallback();
 
   // Logo (se rellena async)
   const logoImg = document.createElement('img');
@@ -1590,11 +1612,6 @@ function buildCard(item, type, idx) {
   logoImg.style.display = 'none';
   logoImg.alt = '';
   logoImg.onerror = () => { logoImg.style.display = 'none'; };
-
-  // Fallback texto
-  const fallback = el('div', 'card-logo-fallback');
-  fallback.textContent = item.t;
-  fallback.style.display = 'none';
 
   const overlay = el('div', 'card-overlay');
   overlay.innerHTML = '<div class="card-play-icon">▶</div>';
@@ -1605,16 +1622,31 @@ function buildCard(item, type, idx) {
   wrap.appendChild(overlay);
 
   if (item._isContinue) {
+    const entry = item._entry;
+    let pct = entry && entry.duration ? (entry.time / entry.duration) * 100 : 0;
+    pct = Math.max(0, Math.min(100, pct));
+    // Si ya hay algo de tiempo visto, mostrar al menos un mínimo visible
+    // para que la barra no se vea vacía por redondeo en porcentajes muy bajos.
+    if (entry && entry.time > 0 && pct < 2) pct = 2;
+
     const track = el('div', 'card-progress-track');
     const fill = el('div', 'card-progress-fill');
-    const entry = item._entry;
-    const pct = entry && entry.duration ? Math.min(100, (entry.time / entry.duration) * 100) : 0;
-    fill.style.width = pct + '%';
+    fill.style.width = pct.toFixed(1) + '%';
     track.appendChild(fill);
     wrap.appendChild(track);
+
+    // Minutos vistos, esquina inferior derecha
+    const watched = el('div', 'card-watched-time');
+    watched.textContent = `${Math.max(1, Math.round(entry.time / 60))} min`;
+    wrap.appendChild(watched);
   }
 
   card.appendChild(wrap);
+
+  // Título visible SIEMPRE debajo de la card (fuera del póster, no se superpone a la imagen)
+  const titleLabel = el('div', 'card-title-label');
+  titleLabel.textContent = item._isContinue ? item._entry.title : item.t;
+  card.appendChild(titleLabel);
 
   if (State.myList.includes(item.t)) {
     const badge = el('div', 'mylist-icon');
@@ -1946,7 +1978,7 @@ function updateProgress() {
 
   // Guardar el progreso de "Seguir viendo", con un margen de ~5s reales entre guardados
   const now = Date.now();
-  if (!State.lastProgressSaveAt || now - State.lastProgressSaveAt > 5000) {
+  if (!State.lastProgressSaveAt || now - State.lastProgressSaveAt > 3000) {
     State.lastProgressSaveAt = now;
     recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
   }
