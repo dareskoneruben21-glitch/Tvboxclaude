@@ -43,7 +43,7 @@ html, body {
   height: 70px;
   display: flex; align-items: center; gap: 32px; padding: 0 48px;
   background: linear-gradient(to bottom, rgba(10,10,15,0.98) 60%, transparent);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(12px);
   transition: background var(--trans);
 }
 
@@ -84,24 +84,15 @@ html, body {
 }
 
 #search-btn {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)), var(--bg3);
-  border: 1px solid rgba(201,168,76,0.25);
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid rgba(201,168,76,0.2);
   color: var(--text-dim); font-size: 1.1rem;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all var(--trans); outline: none; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-#search-btn svg { width: 19px; height: 19px; stroke: currentColor; transition: transform var(--trans); }
-#search-btn:hover {
-  border-color: rgba(201,168,76,0.55); color: var(--gold);
-  background: linear-gradient(145deg, rgba(201,168,76,0.14), rgba(255,255,255,0.02)), var(--bg3);
-}
-#search-btn:hover svg { transform: scale(1.08); }
 #search-btn:focus, #search-btn.focused {
-  color: var(--bg); background: var(--gold); border-color: var(--gold);
-  box-shadow: var(--focus-ring), 0 0 18px rgba(201,168,76,0.45);
-  transform: scale(1.06);
+  color: var(--gold); border-color: var(--gold);
+  box-shadow: var(--focus-ring);
 }
 
 /* ===== MAIN ===== */
@@ -211,11 +202,13 @@ html, body {
   border-radius: 10px; overflow: visible;
   cursor: pointer; outline: none !important;
   transition: transform var(--trans), box-shadow var(--trans);
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 .card:focus, .card.focused {
-  transform: scale(1.08) translateZ(0);
-  will-change: transform;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.8);
+  transform: scale(1.08);
+  box-shadow: var(--focus-ring), 0 16px 48px rgba(0,0,0,0.8);
   z-index: 10;
 }
 .card-poster-wrap {
@@ -226,7 +219,7 @@ html, body {
 .card-poster {
   width: 100%; height: 100%;
   object-fit: cover; display: block;
-  transition: transform 150ms ease;
+  transition: transform 400ms ease;
 }
 .card:focus .card-poster, .card.focused .card-poster { transform: scale(1.04); }
 .card-logo {
@@ -251,29 +244,12 @@ html, body {
   z-index: 3;
 }
 .card:focus .card-overlay, .card.focused .card-overlay { opacity: 1; }
-.card-progress-track {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
-  background: rgba(255,255,255,0.25); z-index: 4;
-}
-.card-progress-fill {
-  height: 100%; background: var(--red, #e50914);
-}
 .card-play-icon {
   width: 48px; height: 48px; border-radius: 50%;
   background: rgba(201,168,76,0.92);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem; color: #000;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-}
-.card-watched-time {
-  position: absolute; right: 8px; bottom: 10px; z-index: 5;
-  background: rgba(0,0,0,0.75); color: #fff;
-  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.3px;
-  padding: 2px 7px; border-radius: 5px;
-}
-.card-title-label {
-  margin-top: 8px; font-size: 0.85rem; color: var(--text-dim, #b8b8c2);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .card-title { display: none; }
 
@@ -416,71 +392,13 @@ html, body {
 }
 #player-next-btn.disabled { opacity: 0.35; pointer-events: none; }
 
-#player-skip-intro-btn {
-  display: none;
-  position: absolute;
-  right: 40px;
-  bottom: 130px;
-  z-index: 11;
-  width: auto;
-  height: auto;
-  padding: 12px 22px;
-  border-radius: 8px;
-  background: rgba(20,20,20,0.78);
-  border: 1.5px solid rgba(255,255,255,0.5);
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: background 0.15s, transform 0.15s, opacity 0.2s;
-}
-#player-skip-intro-btn.visible { display: block; opacity: 1; animation: skipIntroIn 0.25s ease; }
-#player-skip-intro-btn:hover { background: rgba(40,40,40,0.9); }
-#player-skip-intro-btn:focus, #player-skip-intro-btn.focused {
-  background: var(--gold); color: #111; border-color: var(--gold);
-  box-shadow: var(--focus-ring); transform: scale(1.05); outline: none;
-}
-@keyframes skipIntroIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-#player-vol-wrap {
-  display: flex; align-items: center; gap: 10px; margin-right: auto;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 30px;
-  padding: 6px 16px 6px 6px;
-  backdrop-filter: blur(6px);
-  transition: background var(--trans), border-color var(--trans);
-}
-#player-vol-wrap:hover { background: rgba(255,255,255,0.1); border-color: rgba(201,168,76,0.3); }
-#player-mute-btn { width: 40px; height: 40px; font-size: 1.05rem; }
-#player-vol { font-size: 0.8rem; color: var(--text-dim); min-width: 34px; font-variant-numeric: tabular-nums; text-align: right; }
+#player-vol-wrap { display: flex; align-items: center; gap: 8px; margin-right: auto; }
+#player-vol { font-size: 0.85rem; color: var(--text-dim); min-width: 38px; font-variant-numeric: tabular-nums; }
 #player-vol-track {
-  width: 80px; height: 5px; border-radius: 3px;
-  background: rgba(255,255,255,0.16);
-  position: relative; overflow: visible;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  width: 70px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2);
+  position: relative; overflow: hidden;
 }
-#player-vol-fill {
-  height: 100%; border-radius: 3px; width: 100%;
-  background: linear-gradient(90deg, #a8843a, var(--gold));
-  position: relative;
-  box-shadow: 0 0 8px rgba(201,168,76,0.55);
-  transition: width 0.1s linear;
-}
-#player-vol-fill::after {
-  content: '';
-  position: absolute; top: 50%; right: -5px;
-  width: 11px; height: 11px; border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(201,168,76,0.9), 0 0 8px rgba(201,168,76,0.7);
-  transform: translateY(-50%);
-}
+#player-vol-fill { height: 100%; background: var(--gold); width: 100%; }
 
 .ctrl-hint {
   font-size: 0.72rem; color: var(--text-dim);
@@ -568,28 +486,6 @@ html, body {
 #toast.show { transform: translateY(0); opacity: 1; }
 
 /* ===== MODAL DETAIL (info) ===== */
-#trailer-preview-overlay {
-  display: none; position: fixed; inset: 0; z-index: 260; background: #000;
-}
-#trailer-preview-overlay.visible { display: block; }
-#trailer-preview-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-#trailer-preview-info {
-  position: absolute; left: 36px; bottom: 36px; z-index: 2;
-  max-width: 60%; pointer-events: none;
-}
-#trailer-preview-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 2px;
-  color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.9);
-}
-#trailer-preview-btns {
-  position: absolute; right: 36px; bottom: 36px; z-index: 2;
-  display: flex; gap: 10px;
-}
-#trailer-preview-overlay::before {
-  content: ''; position: absolute; inset: 0; z-index: 1;
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 35%);
-  pointer-events: none;
-}
 #info-overlay {
   display: none; position: fixed; inset: 0; z-index: 200;
   background: rgba(10,10,15,0.85); backdrop-filter: blur(8px);
@@ -601,14 +497,7 @@ html, body {
   border-radius: 16px; padding: 36px; max-width: 700px; width: 90%;
   display: flex; gap: 28px;
 }
-#info-poster-wrap { width: 220px; flex-shrink: 0; border-radius: 10px; aspect-ratio: 16/9; overflow: hidden; position: relative; background: var(--bg3); }
-#info-poster { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg3); transition: opacity 300ms ease; }
-#info-poster.faded { opacity: 0; }
-#info-trailer {
-  position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
-  opacity: 0; pointer-events: none; transition: opacity 400ms ease;
-}
-#info-trailer.visible { opacity: 1; }
+#info-poster { width: 220px; flex-shrink: 0; border-radius: 10px; aspect-ratio: 16/9; object-fit: cover; background: var(--bg3); }
 #info-content { flex: 1; }
 #info-title {
   font-family: 'Bebas Neue', sans-serif;
@@ -650,16 +539,6 @@ html, body {
 </style>
 </head>
 <body>
-<div id="trailer-preview-overlay">
-  <iframe id="trailer-preview-frame" src="" allow="autoplay; encrypted-media" frameborder="0"></iframe>
-  <div id="trailer-preview-info">
-    <div id="trailer-preview-title"></div>
-  </div>
-  <div id="trailer-preview-btns">
-    <button id="trailer-preview-play-btn" class="info-btn primary" tabindex="0">▶ Reproducir</button>
-    <button id="trailer-preview-close-btn" class="info-btn secondary" tabindex="0">✕ Cerrar</button>
-  </div>
-</div>
 
 <!-- HEADER -->
 <div id="header">
@@ -681,7 +560,7 @@ html, body {
     <button class="cat-btn" data-cat="drama">Drama</button>
     <button class="cat-btn" data-cat="fantasia">Fantasía</button>
   </div>
-  <button id="search-btn" title="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
+  <button id="search-btn" title="Buscar">🔍</button>
 </div>
 
 <!-- MAIN -->
@@ -715,7 +594,6 @@ html, body {
     <video id="player-video" preload="metadata"></video>
     <iframe id="player-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
     <div id="player-spinner"></div>
-    <button class="player-btn" id="player-skip-intro-btn" tabindex="0" title="Saltar intro">Saltar intro ⏭</button>
 
     <div id="player-topbar">
       <button class="player-btn" id="player-close-btn" tabindex="0" title="Cerrar (Back)">←</button>
@@ -743,6 +621,11 @@ html, body {
         <button class="player-btn" id="player-forward-btn" tabindex="0" title="Adelantar 10s">⏩</button>
         <button class="player-btn" id="player-next-btn" tabindex="0" title="Siguiente capítulo">Siguiente ⏭</button>
         <button class="player-btn" id="player-fullscreen-btn" tabindex="0" title="Pantalla completa">⛶</button>
+        <div class="ctrl-hint">
+          <span><kbd>◀▶</kbd> Navegar</span>
+          <span><kbd>↵</kbd> Seleccionar</span>
+          <span><kbd>⌫</kbd> Cerrar</span>
+        </div>
       </div>
     </div>
   </div>
@@ -769,10 +652,7 @@ html, body {
 <!-- INFO OVERLAY -->
 <div id="info-overlay">
   <div id="info-box">
-  <div id="info-poster-wrap">
     <img id="info-poster" src="" alt="">
-    <iframe id="info-trailer" src="" allow="autoplay; encrypted-media" frameborder="0"></iframe>
-  </div>
     <div id="info-content">
       <div id="info-logo-wrap"></div>
       <div id="info-title"></div>
@@ -927,30 +807,7 @@ async function fetchTVDBLogo(title, type) {
   } catch(e) { IMG_CACHE[key] = null; return null; }
 }
 
-// Trailer/teaser desde TMDB (YouTube). Se usa para la vista previa tipo Netflix en la ficha.
-async function fetchTMDBTrailer(tmdbId, type) {
-  const key = `tmdbtrailer_${tmdbId}_${type}`;
-  if (IMG_CACHE[key] !== undefined) return IMG_CACHE[key];
-  try {
-    let res = await fetch(`${TMDB_BASE}/${type}/${tmdbId}/videos?api_key=${TMDB_KEY}&language=es-MX`);
-    let data = await res.json();
-    let vids = (data.results || []).filter(v => v.site === 'YouTube');
-    if (!vids.length) {
-      res = await fetch(`${TMDB_BASE}/${type}/${tmdbId}/videos?api_key=${TMDB_KEY}&language=en-US`);
-      data = await res.json();
-      vids = (data.results || []).filter(v => v.site === 'YouTube');
-    }
-    const trailer = vids.find(v => v.type === 'Trailer' && v.official) ||
-                     vids.find(v => v.type === 'Trailer') ||
-                     vids.find(v => v.type === 'Teaser') ||
-                     vids[0];
-    const ykey = trailer ? trailer.key : null;
-    IMG_CACHE[key] = ykey;
-    return ykey;
-  } catch (e) { IMG_CACHE[key] = null; return null; }
-}
-
-
+// Fondo del hero: SIEMPRE desde TMDB, sin texto (backdrops con include_image_language=null)
 async function fetchTMDBBackdrop(tmdbId, type) {
   const key = `tmdbbg_${tmdbId}_${type}`;
   if (IMG_CACHE[key] !== undefined) return IMG_CACHE[key];
@@ -970,46 +827,10 @@ async function fetchTMDBBackdrop(tmdbId, type) {
 // Categorías que son series/TV
 const TV_CATS = new Set(['series','anime']);
 
-// ========================
-// SELECCIÓN DIARIA (hero / top10)
-// ========================
-// Hash simple y determinístico de un string a un entero sin signo.
-function hashString(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-  }
-  return h >>> 0;
-}
-
-// Misma fecha (año-mes-día) => mismo seed durante todo el día.
-function getDailySeed() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
-
-// Puntaje pseudoaleatorio pero estable por título+día. No depende del orden
-// del catálogo ni de cuántos items haya, así que agregar/quitar títulos no
-// reordena los que ya estaban — y cambia solo cuando cambia el día.
-function dailyScore(title, salt) {
-  return hashString(getDailySeed() + '::' + (salt || '') + '::' + (title || ''));
-}
-
-// Elige hasta `count` items de TODO el catálogo (incluyendo lo que se vaya
-// agregando), de forma determinística para el día actual. `salt` permite que
-// dos secciones (ej. hero y top10) tengan sorteos independientes ese mismo día.
-function getDailyPicks(items, count, salt) {
-  return [...items]
-    .map(item => ({ item, score: dailyScore(item.t, salt) }))
-    .sort((a, b) => a.score - b.score)
-    .slice(0, count)
-    .map(x => x.item);
-}
-
 async function enrichItem(item) {
   const isTV = TV_CATS.has(item.c);
   const tmdb = await fetchTMDB(item.t, !isTV);
-  if (!tmdb) return { backdrop: item.i, poster: item.i, logo: null, overview: '', tmdb_id: null, tmdb_type: null };
+  if (!tmdb) return { backdrop: item.i, poster: item.i, logo: null, overview: '' };
   const textlessBg = await fetchTMDBBackdrop(tmdb.tmdb_id, tmdb.type);
   // Cadena de logos: TMDB -> Fanart -> TheTVDB. Se prueba en orden hasta encontrar uno.
   let logo = await fetchTMDBLogo(tmdb.tmdb_id, tmdb.type);
@@ -1019,9 +840,7 @@ async function enrichItem(item) {
     backdrop: textlessBg || item.i,   // fondo sin texto desde TMDB, si no tu imagen manual
     poster: item.i,     // siempre tu imagen manual (para tarjetas del catálogo)
     logo,
-    overview: tmdb.overview,
-    tmdb_id: tmdb.tmdb_id,
-    tmdb_type: tmdb.type
+    overview: tmdb.overview
   };
 }
 
@@ -1032,8 +851,6 @@ const State = {
   catalog: [],
   filtered: [],
   myList: [],
-  progress: {},
-  lastProgressSaveAt: 0,
   activeCategory: 'all',
   currentFocusEl: null,
   heroItem: null,
@@ -1042,23 +859,10 @@ const State = {
   playerVisible: false,
   searchVisible: false,
   infoVisible: false,
-  previewVisible: false,
-  _previewCard: null,
-  _previewItem: null,
-  _cardPreviewTimer: null,
-  _suppressPreviewOnce: false,
   controlsTimer: null,
   searchQuery: '',
   searchDebounceTimer: null,
   hls: null,
-  // --- Detección automática de intro ---
-  introCache: {},           // url -> segundos estimados de fin de intro
-  introWatchRAF: null,
-  introWindowEnd: 0,
-  introTargetTime: 0,
-  introBtnVisible: false,
-  introUrl: null,
-  playerEntryScrollTop: 0,
 };
 
 // Focus navigation groups (ordered for spatial navigation)
@@ -1070,7 +874,6 @@ const ZONES = {
   player: [],
   search: [],
   info: [],
-  preview: [],
 };
 
 // ========================
@@ -1083,24 +886,6 @@ const DEMO_CATALOG = [
   // array "seasons". Cada temporada tiene "n" (número) y "episodes" (array de {t, h}).
   // En la card del catálogo solo aparece UNA vez "Stranger Things"; al abrirla, dentro de la
   // ficha aparecen los botones de temporada y, debajo, la lista de episodios de esa temporada.
-{
-  t: "Citadel Honey Bunny",
-  c: "series",
-  i: "https://image.tmdb.org/t/p/original/hf3mq5cfXTdKHiW3UkZwSxbkx1A.jpg",
-  seasons: [
-    {
-      n: 1,
-      episodes: [
-        { t: "Episodio 1: Episodio 1", h: "https://hugh.cdn.rumble.cloud/video/s8/2/7/D/b/F/7DbFu.aaa.mp4" },
-        { t: "Episodio 2: Episodio 2", h: "https://hugh.cdn.rumble.cloud/video/s8/2/x/M/b/F/xMbFu.aaa.mp4" },
-        { t: "Episodio 3: Episodio 3", h: "https://hugh.cdn.rumble.cloud/video/s8/2/5/U/k/F/5UkFu.aaa.mp4" },
-        { t: "Episodio 4: Episodio 4", h: "https://hugh.cdn.rumble.cloud/video/s8/2/T/a/l/F/TalFu.aaa.mp4" },
-        { t: "Episodio 5: Episodio 5", h: "https://1a-1791.com/video/s8/2/K/O/k/F/KOkFu.aaa.mp4" },
-        { t: "Episodio 6: Episodio 6", h: "https://1a-1791.com/video/s8/2/g/g/l/F/gglFu.aaa.mp4" }
-      ]
-    }
-  ]
-},
   {
     t: "Stranger Things",
     c: "series",
@@ -1154,27 +939,27 @@ const DEMO_CATALOG = [
   },
 
   // ====== EJEMPLO: ANIME con 3 temporadas, mismo patrón agrupado ======
-{
-  t: "Elfen Lied",
-  c: "anime",
-  i: "https://image.tmdb.org/t/p/original/lewWPFjUjXkJgXV9C8yzN35fiu1.jpg",
-  seasons: [
-    {
-      n: 1,
-      episodes: [
-        { t: "Episodio 1: El Encuentro", h: "https://player.zilla-networks.com/m3u8/4e17b54ccadff16c5761332ae31340ae" },
-        { t: "Episodio 2: Exterminio", h: "https://player.zilla-networks.com/m3u8/83135a588ed4424828c3a8b9d44131f5" },
-        { t: "Episodio 3: Dentro de su corazón", h: "https://player.zilla-networks.com/m3u8/f24a32f21c605a1c47e2af7898ceec6d" },
-        { t: "Episodio 4: Colisión", h: "https://player.zilla-networks.com/m3u8/5e33491ede30028e2942ab8bb2988811" },
-        { t: "Episodio 5: Recepción", h: "https://player.zilla-networks.com/m3u8/b20de4862b8456bc5768c758eec8c317" },
-        { t: "Episodio 6: Corazones ardientes", h: "https://player.zilla-networks.com/m3u8/f28445b2f3beff1e6196ef744f1b6085" },
-        { t: "Episodio 7: Confrontación", h: "https://player.zilla-networks.com/m3u8/0c3aca87fd069645072547e9c5d8b8a8" },
-        { t: "Episodio 8: El comienzo", h: "https://player.zilla-networks.com/m3u8/448d754e74126616da5d10207c203787" },
-        { t: "Episodio 9: Reminiscencia", h: "https://player.zilla-networks.com/m3u8/40b80e09a7783b0f0c70601e7180afa3" },
-        { t: "Episodio 10: Infante", h: "https://player.zilla-networks.com/m3u8/94336633e74b78e3814028b711469c52" },
-        { t: "Episodio 11: Confusión", h: "https://player.zilla-networks.com/m3u8/2a1f635e0f31188bf95a08633435ba1b" },
-        { t: "Episodio 12: Descenso", h: "https://player.zilla-networks.com/m3u8/fd8cbebfa346e85234623fc4e1800be7" },
-        { t: "Episodio 13: Iluminación", h: "https://player.zilla-networks.com/m3u8/5b326f483a3afcc6b3b2a4191f63fe2c" }
+  {
+    t: "Elfen Lied",
+    c: "anime",
+    i: "https://image.tmdb.org/t/p/original/2ZOp6VojGj6pUUorbPbVLbxugOp.jpg",
+    seasons: [
+      {
+        n: 1,
+        episodes: [
+          { t: "Episodio 1", h: "https://player.zilla-networks.com/m3u8/4e17b54ccadff16c5761332ae31340ae" },
+          { t: "Episodio 2", h: "https://player.zilla-networks.com/m3u8/83135a588ed4424828c3a8b9d44131f5" },
+          { t: "Episodio 3", h: "https://player.zilla-networks.com/m3u8/f24a32f21c605a1c47e2af7898ceec6d" },
+          { t: "Episodio 4", h: "https://player.zilla-networks.com/m3u8/5e33491ede30028e2942ab8bb2988811" },
+          { t: "Episodio 5", h: "https://player.zilla-networks.com/m3u8/b20de4862b8456bc5768c758eec8c317" },
+          { t: "Episodio 6", h: "https://player.zilla-networks.com/m3u8/f28445b2f3beff1e6196ef744f1b6085" },
+          { t: "Episodio 7", h: "https://player.zilla-networks.com/m3u8/0c3aca87fd069645072547e9c5d8b8a8" },
+          { t: "Episodio 8", h: "https://player.zilla-networks.com/m3u8/448d754e74126616da5d10207c203787" },
+          { t: "Episodio 9", h: "https://player.zilla-networks.com/m3u8/40b80e09a7783b0f0c70601e7180afa3" },
+          { t: "Episodio 10", h: "https://player.zilla-networks.com/m3u8/94336633e74b78e3814028b711469c52" },
+          { t: "Episodio 11", h: "https://player.zilla-networks.com/m3u8/2a1f635e0f31188bf95a08633435ba1b" },
+          { t: "Episodio 12", h: "https://player.zilla-networks.com/m3u8/fd8cbebfa346e85234623fc4e1800be7" },
+          { t: "Episodio 12", h: "https://player.zilla-networks.com/m3u8/5b326f483a3afcc6b3b2a4191f63fe2c" }
 
         ]
       }
@@ -1450,12 +1235,6 @@ const DEMO_CATALOG = [
   i: "https://image.tmdb.org/t/p/original/bYSenwevJ3e71W0aweIv0vhBrhS.jpg",
   h: "https://1a-1791.com/video/fwe2/f3/s8/2/m/Y/Y/4/mYY4z.aaa.mp4"
 },
-{
-  t: "Dragon Ball Z: La Fusión de Goku y Vegeta",
-  c: "anime",
-  i: "https://image.tmdb.org/t/p/original/9hAgxPgaPHLGg9NUEGld194Ek05.jpg",
-  h: "https://player.zilla-networks.com/m3u8/4e206d07be45216dfeb8e554aa378beb"
-},
 
 ];
 
@@ -1465,7 +1244,6 @@ const DEMO_CATALOG = [
 function init() {
   loadCatalog();
   loadMyList();
-  loadProgress();
   buildKeyboard();
   render();
   bindGlobal();
@@ -1505,67 +1283,6 @@ function saveMyList() {
 }
 
 // ========================
-// SEGUIR VIENDO (progreso)
-// ========================
-function loadProgress() {
-  try {
-    const raw = localStorage.getItem('am_progress_v1');
-    State.progress = raw ? JSON.parse(raw) : {};
-  } catch(e) { State.progress = {}; }
-}
-
-function saveProgressMap() {
-  try { localStorage.setItem('am_progress_v1', JSON.stringify(State.progress)); } catch(e) {}
-}
-
-// Devuelve el segundo donde retomar, o 0 si no hay progreso guardado / ya terminó.
-function getResumeTime(url) {
-  const entry = url && State.progress[url];
-  if (!entry || !entry.duration) return 0;
-  if (entry.time < 10) return 0;
-  if (entry.time / entry.duration >= 0.95) return 0;
-  return entry.time;
-}
-
-// Guarda/actualiza (o elimina si terminó) el progreso de reproducción de un item.
-function recordProgress(item, context, time, duration) {
-  if (!item || !item.h || !duration || !isFinite(duration) || isNaN(duration)) return;
-  const pct = time / duration;
-  if (pct >= 0.95 || time < 5) {
-    // Terminado o apenas comenzando: no debe aparecer en "Seguir viendo"
-    if (State.progress[item.h]) {
-      delete State.progress[item.h];
-      saveProgressMap();
-    }
-    return;
-  }
-  const parent = context && context.parentItem;
-  State.progress[item.h] = {
-    time, duration,
-    title: parent ? parent.t : (item.t || ''),
-    subtitle: parent ? (item.t.split(' - ').slice(1).join(' - ') || '') : '',
-    img: parent ? parent.i : (item.i || ''),
-    cat: item.c || '',
-    resumeItem: { t: item.t, h: item.h, c: item.c },
-    parentTitle: parent ? parent.t : null,
-    seasonIndex: context ? context.seasonIndex : null,
-    episodeIndex: context ? context.episodeIndex : null,
-    updatedAt: Date.now()
-  };
-  saveProgressMap();
-}
-
-// Reanuda la reproducción de una entrada de "Seguir viendo" desde donde se quedó.
-function resumeContinueItem(entry) {
-  let context = null;
-  if (entry.parentTitle) {
-    const parent = State.catalog.find(c => c.t === entry.parentTitle);
-    if (parent) context = { parentItem: parent, seasonIndex: entry.seasonIndex, episodeIndex: entry.episodeIndex };
-  }
-  openPlayer(entry.resumeItem, context);
-}
-
-// ========================
 // RENDER
 // ========================
 function render() {
@@ -1588,21 +1305,12 @@ function render() {
     State.filtered = State.catalog.filter(item => item.c === State.activeCategory);
   }
 
-  // Hero slideshow: SIEMPRE de todo el catálogo, con selección diaria estable
-  const dailyHero = State.catalog.length ? getDailyPicks(State.catalog, 4, 'hero') : [];
-  initHeroSlideshow(dailyHero.length ? dailyHero : State.filtered);
+  // Hero slideshow
+  initHeroSlideshow(State.filtered.length ? State.filtered : State.catalog);
 
   // Build sections
   cat.innerHTML = '';
   ZONES.catalog = [];
-
-  // Seguir viendo (progreso guardado), va primero al estilo Netflix
-  const continueEntries = Object.values(State.progress)
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, 20);
-  if (continueEntries.length) {
-    buildContinueSection(cat, continueEntries);
-  }
 
   // My List
   const myListItems = State.catalog.filter(item => State.myList.includes(item.t));
@@ -1610,11 +1318,9 @@ function render() {
     buildSection(cat, 'Mi Lista', myListItems, 'mylist');
   }
 
-  // Top 10: SIEMPRE de todo el catálogo, con selección diaria estable (no
-  // se reordena si solo agregas títulos nuevos; cambia una vez al día)
-  if (State.catalog.length >= 5) {
-    const top10Pool = State.catalog.filter(item => !dailyHero.includes(item));
-    buildSection(cat, 'Top 10', getDailyPicks(top10Pool, 10, 'top10'), 'top10');
+  // Top 10 (first 10 from filtered)
+  if (State.filtered.length >= 5) {
+    buildSection(cat, 'Top 10', State.filtered.slice(0, 10), 'top10');
   }
 
   // Group by category
@@ -1724,31 +1430,6 @@ async function setHero(item) {
   State.heroItem = item;
 }
 
-function buildContinueSection(container, entries) {
-  const sec = el('div', 'section');
-  const hdr = el('div', 'section-title');
-  hdr.innerHTML = `<span>Seguir viendo</span><span class="section-count">${entries.length} títulos</span>`;
-  const row = el('div', 'cards-row');
-
-  entries.forEach(entry => {
-    const pseudoItem = {
-      t: entry.title + (entry.subtitle ? ' - ' + entry.subtitle : ''),
-      h: entry.resumeItem.h,
-      i: entry.img,
-      c: entry.cat,
-      _isContinue: true,
-      _entry: entry
-    };
-    const card = buildCard(pseudoItem, 'continue', 0);
-    row.appendChild(card);
-    ZONES.catalog.push(card);
-  });
-
-  sec.appendChild(hdr);
-  sec.appendChild(row);
-  container.appendChild(sec);
-}
-
 function buildSection(container, title, items, type) {
   const sec = el('div', 'section');
   const hdr = el('div', 'section-title');
@@ -1782,7 +1463,6 @@ function buildCard(item, type, idx) {
   card.dataset.url = item.h || '';
   card.dataset.img = item.i || '';
   card.dataset.cat = item.c || '';
-  card._item = item;
 
   if (type === 'top10' && idx < 10) {
     const num = el('div', 'top10-num');
@@ -1798,37 +1478,7 @@ function buildCard(item, type, idx) {
   img.src = item.i || '';
   img.alt = item.t;
   img.loading = 'lazy';
-
-  // Fallback texto (se muestra si la imagen no carga o no hay URL)
-  const fallback = el('div', 'card-logo-fallback');
-  fallback.textContent = item.t;
-  fallback.style.display = 'none';
-
-  const showFallback = () => {
-    img.style.display = 'none';
-    wrap.style.background = '#1a1a24';
-    fallback.style.display = 'block';
-    // Para "Seguir viendo": si el póster guardado falla o no existe, intentar
-    // recuperar un póster real desde TMDB en lugar de quedarnos solo con el texto.
-    if (item._isContinue && !item._triedEnrich) {
-      item._triedEnrich = true;
-      const srcTitle = item._entry.title;
-      const srcItem = State.catalog.find(c => c.t === srcTitle);
-      if (srcItem) {
-        enrichItem(srcItem).then(data => {
-          const newSrc = data.poster || data.backdrop;
-          if (newSrc) {
-            img.src = newSrc;
-            img.style.display = 'block';
-            wrap.style.background = '';
-            fallback.style.display = 'none';
-          }
-        }).catch(() => {});
-      }
-    }
-  };
-  img.onerror = showFallback;
-  if (!item.i) showFallback();
+  img.onerror = () => { wrap.style.background = '#1a1a24'; };
 
   // Logo (se rellena async)
   const logoImg = document.createElement('img');
@@ -1837,6 +1487,11 @@ function buildCard(item, type, idx) {
   logoImg.alt = '';
   logoImg.onerror = () => { logoImg.style.display = 'none'; };
 
+  // Fallback texto
+  const fallback = el('div', 'card-logo-fallback');
+  fallback.textContent = item.t;
+  fallback.style.display = 'none';
+
   const overlay = el('div', 'card-overlay');
   overlay.innerHTML = '<div class="card-play-icon">▶</div>';
 
@@ -1844,35 +1499,7 @@ function buildCard(item, type, idx) {
   wrap.appendChild(logoImg);
   wrap.appendChild(fallback);
   wrap.appendChild(overlay);
-  card._wrap = wrap;
-  card._posterImg = img;
-
-  if (item._isContinue) {
-    const entry = item._entry;
-    let pct = entry && entry.duration ? (entry.time / entry.duration) * 100 : 0;
-    pct = Math.max(0, Math.min(100, pct));
-    // Si ya hay algo de tiempo visto, mostrar al menos un mínimo visible
-    // para que la barra no se vea vacía por redondeo en porcentajes muy bajos.
-    if (entry && entry.time > 0 && pct < 2) pct = 2;
-
-    const track = el('div', 'card-progress-track');
-    const fill = el('div', 'card-progress-fill');
-    fill.style.width = pct.toFixed(1) + '%';
-    track.appendChild(fill);
-    wrap.appendChild(track);
-
-    // Minutos vistos, esquina inferior derecha
-    const watched = el('div', 'card-watched-time');
-    watched.textContent = `${Math.max(1, Math.round(entry.time / 60))} min`;
-    wrap.appendChild(watched);
-  }
-
   card.appendChild(wrap);
-
-  // Título visible SIEMPRE debajo de la card (fuera del póster, no se superpone a la imagen)
-  const titleLabel = el('div', 'card-title-label');
-  titleLabel.textContent = item._isContinue ? item._entry.title : item.t;
-  card.appendChild(titleLabel);
 
   if (State.myList.includes(item.t)) {
     const badge = el('div', 'mylist-icon');
@@ -1880,12 +1507,8 @@ function buildCard(item, type, idx) {
     card.appendChild(badge);
   }
 
-  // On activate: reanudar directamente si es de "Seguir viendo", si no mostrar info
-  card.addEventListener('activate', () => {
-    clearPendingPreviewTimer();
-    if (item._isContinue) resumeContinueItem(item._entry);
-    else showInfo(item);
-  });
+  // On activate: show info
+  card.addEventListener('activate', () => showInfo(item));
 
   return card;
 }
@@ -1900,30 +1523,7 @@ function showInfo(item) {
   // Imagen: usar backdrop enriquecido si existe, si no la imagen manual mientras carga
   const posterEl = qs('#info-poster');
   posterEl.src = item._backdrop || item.i || '';
-  posterEl.classList.remove('faded');
-
-  // Vista previa tipo Netflix: detener cualquier trailer anterior y resetear
-  const trailerEl = qs('#info-trailer');
-  trailerEl.classList.remove('visible');
-  trailerEl.src = '';
-  if (State._trailerTimer) { clearTimeout(State._trailerTimer); State._trailerTimer = null; }
-
-  // Si ya conocemos el tmdb_id de este item, intentar trailer ya mismo (con
-  // un pequeño retraso, como Netflix, para no disparar video en cada toque rápido)
-  const tryPlayTrailer = (tmdbId, tmdbType) => {
-    if (!tmdbId) return;
-    State._trailerTimer = setTimeout(async () => {
-      const ykey = await fetchTMDBTrailer(tmdbId, tmdbType);
-      // Solo reproducir si la ficha sigue abierta y mostrando el mismo item
-      if (ykey && State.infoVisible && State.infoItem === item) {
-        trailerEl.src = `https://www.youtube.com/embed/${ykey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ykey}&modestbranding=1&playsinline=1&rel=0`;
-        trailerEl.classList.add('visible');
-        posterEl.classList.add('faded');
-      }
-    }, 700);
-  };
-  if (item._tmdbId) tryPlayTrailer(item._tmdbId, item._tmdbType);
-
+  posterEl.style.cssText = 'width:220px;flex-shrink:0;border-radius:10px;aspect-ratio:16/9;object-fit:cover;background:var(--bg3)';
 
   // Logo o título
   const titleEl = qs('#info-title');
@@ -1953,13 +1553,10 @@ function showInfo(item) {
       item._backdrop = data.backdrop;
       item._logo = data.logo;
       item._overview = data.overview;
-      item._tmdbId = data.tmdb_id;
-      item._tmdbType = data.tmdb_type;
       // Solo actualizar si la ficha sigue mostrando el mismo item
       if (State.infoVisible && State.infoItem === item) {
         if (data.backdrop) posterEl.src = data.backdrop;
         if (synEl && data.overview) synEl.textContent = data.overview;
-        if (!trailerEl.classList.contains('visible')) tryPlayTrailer(data.tmdb_id, data.tmdb_type);
         if (data.logo) {
           titleEl.style.display = 'none';
           logoWrap.innerHTML = '';
@@ -2036,11 +1633,6 @@ function showInfo(item) {
 function closeInfo() {
   State.infoVisible = false;
   qs('#info-overlay').classList.remove('visible');
-  if (State._trailerTimer) { clearTimeout(State._trailerTimer); State._trailerTimer = null; }
-  const trailerEl = qs('#info-trailer');
-  trailerEl.classList.remove('visible');
-  trailerEl.src = '';
-  qs('#info-poster').classList.remove('faded');
   if (State.currentFocusEl) State.currentFocusEl.classList.remove('focused');
   // return focus to last card
   const lastCard = ZONES.catalog.find(c => c.dataset.title === (State.infoItem && State.infoItem.t));
@@ -2050,16 +1642,6 @@ function closeInfo() {
 // ========================
 // PLAYER
 // ========================
-// Si hay progreso guardado para esta URL, salta a ese punto (cuando los
-// metadatos ya están listos; si no, espera al evento loadedmetadata).
-function applyResume(video, url) {
-  const resume = getResumeTime(url);
-  if (!resume) return;
-  const trySeek = () => { try { video.currentTime = resume; } catch(e) {} };
-  if (video.readyState >= 1) trySeek();
-  else video.addEventListener('loadedmetadata', trySeek, { once: true });
-}
-
 function getNextEpisode(context) {
   if (!context || !context.parentItem || !context.parentItem.seasons) return null;
   const seasons = context.parentItem.seasons;
@@ -2095,106 +1677,7 @@ function playNextEpisode() {
   );
 }
 
-// ========================
-// DETECCIÓN AUTOMÁTICA DE INTRO
-// ========================
-// Estrategia: analizamos el audio en tiempo real con Web Audio API mientras
-// el video reproduce los primeros minutos. Buscamos el patrón típico de una
-// intro: un tramo "fuerte" (música/tema de apertura) seguido de un breve
-// silencio/caída de volumen y luego el contenido real retomando el audio.
-// Ese punto de "retoma" se marca como fin de intro. Si no se detecta nada
-// (audio bloqueado por CORS, contenido sin patrón claro, etc.) se usa un
-// salto por defecto razonable según el tipo de contenido, para que el botón
-// siempre sea útil.
-function getIntroConfig(context, item) {
-  const isEpisodic = !!(context && context.parentItem); // serie / anime
-  if (isEpisodic) {
-    // Series y anime: la intro suele terminar alrededor del minuto 1:25
-    return { fallback: 85, hideAfter: 130 };
-  }
-  // Películas: solo logos de estudio / cortinilla inicial
-  return { fallback: 30, hideAfter: 55 };
-}
-
-function stopIntroDetection() {
-  if (State.introWatchRAF) { cancelAnimationFrame(State.introWatchRAF); State.introWatchRAF = null; }
-}
-
-function resetIntroUI() {
-  stopIntroDetection();
-  hideSkipIntroBtn();
-  State.introTargetTime = 0;
-  State.introWindowEnd = 0;
-}
-
-// Vigía: mientras el botón esté visible, lo oculta automáticamente en cuanto
-// el video pasa el punto estimado de fin de intro.
-function watchSkipBtn(video) {
-  const tick = () => {
-    if (!State.playerVisible || !State.introBtnVisible) { State.introWatchRAF = null; return; }
-    if (video.currentTime >= State.introTargetTime || video.currentTime > State.introWindowEnd) {
-      hideSkipIntroBtn();
-      return;
-    }
-    State.introWatchRAF = requestAnimationFrame(tick);
-  };
-  State.introWatchRAF = requestAnimationFrame(tick);
-}
-
-// Detección SIN tocar el audio del video en absoluto (no usa Web Audio API,
-// para no interferir nunca con el sonido de la reproducción). Se basa en una
-// estimación por tipo de contenido: se muestra el botón apenas arranca el
-// video y se oculta solo al pasar el punto estimado o la ventana máxima.
-function startIntroDetection(video, url, context, item) {
-  resetIntroUI();
-  State.introUrl = url;
-  const cfg = getIntroConfig(context, item);
-  State.introWindowEnd = cfg.hideAfter;
-  State.introTargetTime = State.introCache[url] != null ? State.introCache[url] : cfg.fallback;
-  State.introCache[url] = State.introTargetTime;
-  if (State.introTargetTime > 0) {
-    showSkipIntroBtn();
-    // Foco automático: así el usuario solo necesita presionar OK/Enter en el
-    // control, sin tener que navegar manualmente hasta el botón.
-    focus(qs('#player-skip-intro-btn'));
-    watchSkipBtn(video);
-  }
-}
-
-function showSkipIntroBtn() {
-  if (State.introBtnVisible) return;
-  State.introBtnVisible = true;
-  const btn = qs('#player-skip-intro-btn');
-  btn.classList.add('visible');
-  if (!ZONES.player.includes(btn)) ZONES.player.splice(1, 0, btn);
-}
-
-function hideSkipIntroBtn() {
-  State.introBtnVisible = false;
-  const btn = qs('#player-skip-intro-btn');
-  btn.classList.remove('visible');
-  const idx = ZONES.player.indexOf(btn);
-  if (idx !== -1) ZONES.player.splice(idx, 1);
-  if (State.currentFocusEl === btn) {
-    focus(qs('#player-playpause-btn'));
-  }
-}
-
-function skipIntro() {
-  const video = qs('#player-video');
-  if (!State.introTargetTime) return;
-  try { video.currentTime = State.introTargetTime; } catch (e) {}
-  hideSkipIntroBtn();
-  focus(qs('#player-playpause-btn'));
-}
-
 function openPlayer(item, context) {
-  if (!State.playerVisible) {
-    // Guardamos dónde estaba el usuario en el catálogo SOLO al entrar por
-    // primera vez (no al pasar de un episodio a otro), para volver ahí
-    // exactamente al cerrar el reproductor.
-    State.playerEntryScrollTop = qs('#main').scrollTop;
-  }
   State.playerItem = item;
   State.playerContext = context || null;
   State.playerVisible = true;
@@ -2208,12 +1691,6 @@ function openPlayer(item, context) {
 
   qs('#info-overlay').classList.remove('visible');
   State.infoVisible = false;
-  if (State._trailerTimer) { clearTimeout(State._trailerTimer); State._trailerTimer = null; }
-  qs('#info-trailer').classList.remove('visible');
-  qs('#info-trailer').src = '';
-  qs('#info-poster').classList.remove('faded');
-
-  resetIntroUI();
 
   const video = qs('#player-video');
   const iframe = qs('#player-iframe');
@@ -2235,7 +1712,7 @@ function openPlayer(item, context) {
       State.hls = new Hls();
       State.hls.loadSource(url);
       State.hls.attachMedia(video);
-      State.hls.on(Hls.Events.MANIFEST_PARSED, () => { applyResume(video, url); video.play(); });
+      State.hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
       State.hls.on(Hls.Events.ERROR, (_evt, data) => {
         if (!data.fatal) return;
         switch (data.type) {
@@ -2253,21 +1730,18 @@ function openPlayer(item, context) {
             State.hls = new Hls();
             State.hls.loadSource(url);
             State.hls.attachMedia(video);
-            State.hls.on(Hls.Events.MANIFEST_PARSED, () => { applyResume(video, url); video.play(); });
+            State.hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
             break;
         }
       });
     } else if (isM3U8 && video.canPlayType('application/vnd.apple.mpegurl')) {
       // Safari / algunos WebView reproducen HLS de forma nativa sin hls.js
       video.src = url;
-      applyResume(video, url);
       video.play();
     } else {
       video.src = url;
-      applyResume(video, url);
       video.play();
     }
-    State.lastProgressSaveAt = 0;
     bindVideoEvents(video);
   } else {
     // iframe
@@ -2293,23 +1767,12 @@ function openPlayer(item, context) {
   ];
   focus(qs('#player-playpause-btn'));
   showControls();
-
-  // Se inicia DESPUÉS de fijar ZONES.player para que, si el botón de saltar
-  // intro se muestra de inmediato, quede correctamente insertado en la lista
-  // de navegación del mando a distancia (y no se pierda al reconstruirla).
-  if (isMP4 || isM3U8) {
-    startIntroDetection(video, url, context, item);
-  }
 }
 
 function closePlayer() {
   State.playerVisible = false;
-  resetIntroUI();
-  const video = qs('#player-video');
-  // Guardar la posición exacta antes de limpiar el video
-  recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
-  const finishedTitle = State.playerItem && State.playerItem.t;
   State.playerContext = null;
+  const video = qs('#player-video');
   video.pause();
   video.src = '';
   if (State.hls) { State.hls.destroy(); State.hls = null; }
@@ -2317,17 +1780,9 @@ function closePlayer() {
   qs('#player-spinner').classList.remove('visible');
   qs('#player-overlay').classList.remove('visible');
   clearTimeout(State.controlsTimer);
-  // Refrescar catálogo para que "Seguir viendo" muestre el progreso actualizado
-  render();
-  const main = qs('#main');
-  const lastCard = ZONES.catalog.find(c => c.dataset.title === finishedTitle);
-  if (lastCard) focusSilently(lastCard); else if (ZONES.catalog[0]) focusSilently(ZONES.catalog[0]);
-  // Volver exactamente a donde estaba el usuario antes de entrar al reproductor
-  // (en vez de saltar arriba, al hero). Se hace en doble paso porque el
-  // re-render puede recortar momentáneamente la altura del catálogo y el
-  // navegador "clampea" el scroll antes de que termine de pintar todo.
-  main.scrollTop = State.playerEntryScrollTop || 0;
-  requestAnimationFrame(() => { main.scrollTop = State.playerEntryScrollTop || 0; });
+  // return to catalog
+  const lastCard = ZONES.catalog.find(c => c.dataset.title === (State.playerItem && State.playerItem.t));
+  if (lastCard) focus(lastCard); else if (ZONES.catalog[0]) focus(ZONES.catalog[0]);
 }
 
 function bindVideoEvents(video) {
@@ -2337,10 +1792,7 @@ function bindVideoEvents(video) {
   video.addEventListener('playing', () => qs('#player-spinner').classList.remove('visible'));
   video.addEventListener('canplay', () => qs('#player-spinner').classList.remove('visible'));
   video.addEventListener('play', () => { qs('#player-playpause-btn').textContent = '⏸'; });
-  video.addEventListener('pause', () => {
-    qs('#player-playpause-btn').textContent = '▶';
-    recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
-  });
+  video.addEventListener('pause', () => { qs('#player-playpause-btn').textContent = '▶'; });
   video.addEventListener('ended', () => {
     if (getNextEpisode(State.playerContext)) playNextEpisode(); else closePlayer();
   });
@@ -2353,13 +1805,6 @@ function updateProgress() {
   qs('#progress-bar').style.width = pct + '%';
   qs('#progress-thumb').style.left = pct + '%';
   qs('#player-time').textContent = `${fmtTime(video.currentTime)} / ${fmtTime(video.duration)}`;
-
-  // Guardar el progreso de "Seguir viendo", con un margen de ~5s reales entre guardados
-  const now = Date.now();
-  if (!State.lastProgressSaveAt || now - State.lastProgressSaveAt > 3000) {
-    State.lastProgressSaveAt = now;
-    recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
-  }
 }
 
 function updateVol() {
@@ -2512,94 +1957,23 @@ function filterSearch() {
 }
 
 // ========================
-// VISTA PREVIA EN PANTALLA COMPLETA (sin entrar a la ficha) - tipo Netflix
-// ========================
-function clearPendingPreviewTimer() {
-  if (State._cardPreviewTimer) { clearTimeout(State._cardPreviewTimer); State._cardPreviewTimer = null; }
-}
-
-function scheduleCardPreview(card) {
-  if (!card || !card._item) return;
-  if (State._suppressPreviewOnce) { State._suppressPreviewOnce = false; return; }
-  const item = card._item;
-  State._cardPreviewTimer = setTimeout(async () => {
-    let tmdbId = item._tmdbId, tmdbType = item._tmdbType;
-    if (!tmdbId) {
-      const isTV = TV_CATS.has(item.c);
-      const tmdb = await fetchTMDB(item.t, !isTV);
-      if (tmdb) { tmdbId = tmdb.tmdb_id; tmdbType = tmdb.type; item._tmdbId = tmdbId; item._tmdbType = tmdbType; }
-    }
-    if (!tmdbId || State.currentFocusEl !== card) return;
-    const ykey = await fetchTMDBTrailer(tmdbId, tmdbType);
-    if (!ykey || State.currentFocusEl !== card) return;
-    openCardPreview(card, item, ykey);
-  }, 900);
-}
-
-function openCardPreview(card, item, ykey) {
-  State.previewVisible = true;
-  State._previewCard = card;
-  State._previewItem = item;
-  const overlay = qs('#trailer-preview-overlay');
-  const frame = qs('#trailer-preview-frame');
-  // mute=0: se intenta con sonido (el remoto ya generó interacción del usuario).
-  // Si el WebView lo bloquea, el video igual se ve, solo sin audio.
-  frame.src = `https://www.youtube.com/embed/${ykey}?autoplay=1&mute=0&controls=0&loop=1&playlist=${ykey}&modestbranding=1&playsinline=1&rel=0`;
-  qs('#trailer-preview-title').textContent = item.t || '';
-  overlay.classList.add('visible');
-  ZONES.preview = [qs('#trailer-preview-play-btn'), qs('#trailer-preview-close-btn')];
-  focus(qs('#trailer-preview-play-btn'));
-}
-
-function closeCardPreview(returnFocus) {
-  State.previewVisible = false;
-  const overlay = qs('#trailer-preview-overlay');
-  const frame = qs('#trailer-preview-frame');
-  overlay.classList.remove('visible');
-  frame.src = '';
-  const card = State._previewCard;
-  State._previewCard = null;
-  State._previewItem = null;
-  if (returnFocus && card) {
-    State._suppressPreviewOnce = true;
-    focus(card);
-  }
-}
-
-// ========================
 // FOCUS ENGINE
 // ========================
 function focus(el) {
   if (!el) return;
-  clearPendingPreviewTimer();
   if (State.currentFocusEl) {
     State.currentFocusEl.classList.remove('focused');
   }
   State.currentFocusEl = el;
   el.classList.add('focused');
-  el.focus({ preventScroll: true });
-  // Scroll instantáneo (no 'smooth'): con D-pad, animar el scroll en cada
-  // pulsación se siente como traba/demora al bajar de tarjeta en tarjeta.
+  el.focus({ preventScroll: false });
+  // scroll into view in rows
   if (el.closest('.cards-row')) {
-    el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
-    if (el.classList.contains('card')) scheduleCardPreview(el);
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
   if (el.closest('#keyboard')) {
-    el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
-}
-
-// Igual que focus(), pero sin mover el scroll de la página (ni el de la fila
-// de tarjetas). Se usa al cerrar el reproductor para no "saltar" fuera de la
-// posición donde el usuario estaba navegando.
-function focusSilently(el) {
-  if (!el) return;
-  if (State.currentFocusEl) {
-    State.currentFocusEl.classList.remove('focused');
-  }
-  State.currentFocusEl = el;
-  el.classList.add('focused');
-  el.focus({ preventScroll: true });
 }
 
 // ========================
@@ -2657,7 +2031,6 @@ function bindGlobal() {
     playNextEpisode();
     showControls();
   });
-  qs('#player-skip-intro-btn').addEventListener('activate', skipIntro);
   qs('#player-fullscreen-btn').addEventListener('activate', () => {
     const wrap = qs('#player-video-wrap');
     if (!document.fullscreenElement) {
@@ -2680,20 +2053,6 @@ function bindGlobal() {
     if (State.infoItem) toggleMyList(State.infoItem.t);
   });
   qs('#info-close-btn').addEventListener('activate', closeInfo);
-
-  qs('#trailer-preview-play-btn').addEventListener('activate', () => {
-    const item = State._previewItem;
-    closeCardPreview(false);
-    if (item) {
-      if (item.seasons && item.seasons.length) {
-        const firstEp = item.seasons[0].episodes[0];
-        if (firstEp) openPlayer({ t: `${item.t} - ${firstEp.t}`, h: firstEp.h, c: item.c }, { parentItem: item, seasonIndex: 0, episodeIndex: 0 });
-      } else {
-        openPlayer(item);
-      }
-    }
-  });
-  qs('#trailer-preview-close-btn').addEventListener('activate', () => closeCardPreview(true));
 
   // Also add click listeners for mouse support
   document.querySelectorAll('[tabindex]').forEach(el => {
@@ -2728,15 +2087,6 @@ function onKey(e) {
       navigateSearch(key); return;
     }
     // typing passthrough to keyboard widget
-    return;
-  }
-
-  // Vista previa en pantalla completa (al pararse sobre una card)
-  if (State.previewVisible) {
-    if (key === 'Backspace' || key === 'Escape') { e.preventDefault(); closeCardPreview(true); return; }
-    if (key === 'Enter') { e.preventDefault(); activate(); return; }
-    if (key === 'ArrowLeft' || key === 'ArrowRight') { e.preventDefault(); navigateLinear(ZONES.preview, key); return; }
-    if (key === 'ArrowUp' || key === 'ArrowDown') { e.preventDefault(); return; }
     return;
   }
 
