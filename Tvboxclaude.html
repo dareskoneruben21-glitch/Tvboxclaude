@@ -215,7 +215,7 @@ html, body {
 .card:focus, .card.focused {
   transform: scale(1.08) translateZ(0);
   will-change: transform;
-  box-shadow: var(--focus-ring), 0 16px 48px rgba(0,0,0,0.8);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.8);
   z-index: 10;
 }
 .card-poster-wrap {
@@ -980,19 +980,11 @@ const State = {
   searchDebounceTimer: null,
   hls: null,
   // --- Detección automática de intro ---
-  introCache: {},           // url -> { end: segundos } detectado o por defecto
-  introAudioCtx: null,
-  introSourceNode: null,
-  introAnalyser: null,
-  introDataArr: null,
-  introRAF: null,
+  introCache: {},           // url -> segundos estimados de fin de intro
   introWatchRAF: null,
-  introPhase: 'idle',       // idle | waiting-loud | waiting-quiet | confirming | done
-  introPhaseSince: 0,
   introWindowEnd: 0,
   introTargetTime: 0,
   introBtnVisible: false,
-  introPrevFocusEl: null,
   introUrl: null,
   playerEntryScrollTop: 0,
 };
@@ -2009,47 +2001,15 @@ function playNextEpisode() {
 function getIntroConfig(context, item) {
   const isEpisodic = !!(context && context.parentItem); // serie / anime
   if (isEpisodic) {
-    // Series y anime: la intro suele estar entre el seg. 0 y ~2:10
-    return { scanWindow: 130, fallback: 85, minLoudMs: 1200, quietMs: 500 };
+    // Series y anime: la intro suele terminar alrededor del minuto 1:25
+    return { fallback: 85, hideAfter: 130 };
   }
-  // Películas: solo logos de estudio / cortinilla inicial, ventana corta
-  return { scanWindow: 55, fallback: 30, minLoudMs: 900, quietMs: 400 };
-}
-
-function ensureIntroAudioGraph(video) {
-  if (State.introSourceNode) return true; // ya conectado a este <video>
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return false;
-    if (!State.introAudioCtx) State.introAudioCtx = new Ctx();
-    State.introSourceNode = State.introAudioCtx.createMediaElementSource(video);
-    State.introAnalyser = State.introAudioCtx.createAnalyser();
-    State.introAnalyser.fftSize = 1024;
-    State.introDataArr = new Uint8Array(State.introAnalyser.frequencyBinCount);
-    State.introSourceNode.connect(State.introAnalyser);
-    State.introAnalyser.connect(State.introAudioCtx.destination);
-    return true;
-  } catch (e) {
-    // Si falla (p.ej. ya conectado por otra vía), seguimos sin análisis de audio
-    return false;
-  }
-}
-
-function getRMS() {
-  if (!State.introAnalyser) return 0;
-  State.introAnalyser.getByteTimeDomainData(State.introDataArr);
-  let sum = 0;
-  for (let i = 0; i < State.introDataArr.length; i++) {
-    const v = (State.introDataArr[i] - 128) / 128;
-    sum += v * v;
-  }
-  return Math.sqrt(sum / State.introDataArr.length);
+  // Películas: solo logos de estudio / cortinilla inicial
+  return { fallback: 30, hideAfter: 55 };
 }
 
 function stopIntroDetection() {
-  if (State.introRAF) { cancelAnimationFrame(State.introRAF); State.introRAF = null; }
   if (State.introWatchRAF) { cancelAnimationFrame(State.introWatchRAF); State.introWatchRAF = null; }
-  State.introPhase = 'idle';
 }
 
 function resetIntroUI() {
@@ -2059,8 +2019,8 @@ function resetIntroUI() {
   State.introWindowEnd = 0;
 }
 
-// Vigía permanente: mientras el botón esté visible, lo oculta automáticamente
-// en cuanto el video pasa el punto objetivo (que puede irse afinando en vivo).
+// Vigía: mientras el botón esté visible, lo oculta automáticamente en cuanto
+// el video pasa el punto estimado de fin de intro.
 function watchSkipBtn(video) {
   const tick = () => {
     if (!State.playerVisible || !State.introBtnVisible) { State.introWatchRAF = null; return; }
@@ -2073,103 +2033,20 @@ function watchSkipBtn(video) {
   State.introWatchRAF = requestAnimationFrame(tick);
 }
 
+// Detección SIN tocar el audio del video en absoluto (no usa Web Audio API,
+// para no interferir nunca con el sonido de la reproducción). Se basa en una
+// estimación por tipo de contenido: se muestra el botón apenas arranca el
+// video y se oculta solo al pasar el punto estimado o la ventana máxima.
 function startIntroDetection(video, url, context, item) {
   resetIntroUI();
   State.introUrl = url;
   const cfg = getIntroConfig(context, item);
-  State.introWindowEnd = cfg.scanWindow;
-
-  // Punto de partida: lo ya detectado/aplicado antes para esta URL, o el valor
-  // por defecto según tipo de contenido. El botón se muestra YA con esta
-  // estimación; si luego detectamos el silencio real, se afina en caliente.
-  const startingTarget = State.introCache[url] != null ? State.introCache[url] : cfg.fallback;
-  State.introTargetTime = startingTarget;
-  if (startingTarget > 0) {
+  State.introWindowEnd = cfg.hideAfter;
+  State.introTargetTime = State.introCache[url] != null ? State.introCache[url] : cfg.fallback;
+  State.introCache[url] = State.introTargetTime;
+  if (State.introTargetTime > 0) {
     showSkipIntroBtn();
     watchSkipBtn(video);
-  }
-
-  // Si ya teníamos un valor confirmado en caché, no hace falta re-analizar audio
-  if (State.introCache[url] != null) return;
-
-  const audioOk = ensureIntroAudioGraph(video);
-  if (State.introAudioCtx && State.introAudioCtx.state === 'suspended') {
-    State.introAudioCtx.resume().catch(() => {});
-  }
-  if (!audioOk) {
-    State.introCache[url] = cfg.fallback;
-    return;
-  }
-
-  State.introPhase = 'waiting-loud';
-  State.introPhaseSince = video.currentTime;
-
-  const LOUD = 0.05;
-  const QUIET = 0.018;
-
-  const step = () => {
-    if (!State.playerVisible || State.introUrl !== url) { State.introRAF = null; return; }
-    if (video.paused || video.ended) {
-      State.introRAF = requestAnimationFrame(step);
-      return;
-    }
-    const t = video.currentTime;
-    if (t > cfg.scanWindow) {
-      // No se encontró un patrón claro dentro de la ventana: nos quedamos con el valor por defecto
-      if (State.introCache[url] == null) State.introCache[url] = cfg.fallback;
-      stopIntroDetection();
-      return;
-    }
-
-    const rms = getRMS();
-
-    if (State.introPhase === 'waiting-loud') {
-      if (rms >= LOUD) {
-        if (t - State.introPhaseSince >= cfg.minLoudMs / 1000) {
-          State.introPhase = 'waiting-quiet';
-          State.introPhaseSince = t;
-        }
-      } else {
-        State.introPhaseSince = t;
-      }
-    } else if (State.introPhase === 'waiting-quiet') {
-      if (rms < QUIET) {
-        State.introPhaseSince = t;
-        State.introPhase = 'confirming';
-      }
-    } else if (State.introPhase === 'confirming') {
-      if (rms < QUIET) {
-        if (t - State.introPhaseSince >= cfg.quietMs / 1000) {
-          // El silencio se sostuvo: el contenido real empieza justo ahora
-          finalizeIntroEnd(url, t, video);
-          return;
-        }
-      } else {
-        // El audio volvió a subir antes de confirmar silencio sostenido: seguimos esperando otro hueco
-        State.introPhase = 'waiting-loud';
-        State.introPhaseSince = t;
-      }
-    }
-
-    State.introRAF = requestAnimationFrame(step);
-  };
-  State.introRAF = requestAnimationFrame(step);
-}
-
-function finalizeIntroEnd(url, time, video) {
-  stopIntroDetection();
-  const end = Math.round(time);
-  State.introCache[url] = end;
-  if (State.introUrl === url) {
-    // Afinamos el objetivo en caliente; si el botón ya estaba visible sigue
-    // estándolo (o se oculta de inmediato si ya pasamos el nuevo punto).
-    State.introTargetTime = end;
-    if (video.currentTime >= end) {
-      hideSkipIntroBtn();
-    } else if (!State.introBtnVisible) {
-      showSkipIntroBtn();
-      watchSkipBtn(video);
-    }
   }
 }
 
@@ -2530,12 +2407,13 @@ function focus(el) {
   State.currentFocusEl = el;
   el.classList.add('focused');
   el.focus({ preventScroll: false });
-  // scroll into view in rows
+  // Scroll instantáneo (no 'smooth'): con D-pad, animar el scroll en cada
+  // pulsación se siente como traba/demora al bajar de tarjeta en tarjeta.
   if (el.closest('.cards-row')) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
   }
   if (el.closest('#keyboard')) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
   }
 }
 
