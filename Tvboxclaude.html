@@ -226,7 +226,7 @@ html, body {
 .card-poster {
   width: 100%; height: 100%;
   object-fit: cover; display: block;
-  transition: transform 400ms ease;
+  transition: transform 150ms ease;
 }
 .card:focus .card-poster, .card.focused .card-poster { transform: scale(1.04); }
 .card-logo {
@@ -2409,11 +2409,11 @@ function focus(el) {
   }
   State.currentFocusEl = el;
   el.classList.add('focused');
-  el.focus({ preventScroll: false });
+  el.focus({ preventScroll: true });
   // Scroll instantáneo (no 'smooth'): con D-pad, animar el scroll en cada
   // pulsación se siente como traba/demora al bajar de tarjeta en tarjeta.
   if (el.closest('.cards-row')) {
-    el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+    el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
   }
   if (el.closest('#keyboard')) {
     el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
