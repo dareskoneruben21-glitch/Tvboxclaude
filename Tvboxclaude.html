@@ -2046,6 +2046,9 @@ function startIntroDetection(video, url, context, item) {
   State.introCache[url] = State.introTargetTime;
   if (State.introTargetTime > 0) {
     showSkipIntroBtn();
+    // Foco automático: así el usuario solo necesita presionar OK/Enter en el
+    // control, sin tener que navegar manualmente hasta el botón.
+    focus(qs('#player-skip-intro-btn'));
     watchSkipBtn(video);
   }
 }
