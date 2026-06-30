@@ -9,6 +9,7 @@
 <style>
 :root {
   --gold: #c9a84c;
+  --gold-light: #e8c878;
   --gold-dim: #8a6f2e;
   --red: #e50914;
   --bg: #0a0a0f;
@@ -16,15 +17,19 @@
   --bg3: #1a1a24;
   --text: #e8e8f0;
   --text-dim: #8888a0;
-  --focus-ring: 0 0 0 3px var(--gold), 0 0 20px rgba(201,168,76,0.4);
+  --focus-ring: 0 0 0 3px var(--gold), 0 0 24px rgba(201,168,76,0.5);
   --trans: 220ms cubic-bezier(.4,0,.2,1);
+  --gold-grad: linear-gradient(135deg, var(--gold-light), var(--gold) 55%, var(--gold-dim));
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; outline: none !important; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   width: 100%; height: 100%;
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(201,168,76,0.07), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 100% 0%, rgba(229,9,20,0.05), transparent 55%),
+    var(--bg);
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
   overflow: hidden;
@@ -33,9 +38,9 @@ html, body {
 }
 
 /* ===== SCROLLBAR ===== */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(var(--gold-dim), var(--gold)); border-radius: 3px; }
 
 /* ===== HEADER ===== */
 #header {
@@ -45,17 +50,19 @@ html, body {
   background: linear-gradient(to bottom, rgba(10,10,15,0.98) 60%, transparent);
   backdrop-filter: blur(6px);
   transition: background var(--trans);
+  border-bottom: 1px solid rgba(201,168,76,0.06);
 }
 
 #logo {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 2rem; letter-spacing: 3px;
-  color: var(--gold);
-  text-shadow: 0 0 30px rgba(201,168,76,0.5);
+  background: var(--gold-grad);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 22px rgba(201,168,76,0.45));
   flex-shrink: 0;
   cursor: default;
 }
-#logo span { color: var(--red); }
+#logo span { background: linear-gradient(135deg, #ff3b30, var(--red) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 #nav-cats {
   display: flex; gap: 4px; flex: 1;
@@ -71,14 +78,14 @@ html, body {
   background: none; border: none;
   padding: 6px 14px; border-radius: 20px;
   cursor: pointer; white-space: nowrap;
-  transition: color var(--trans), background var(--trans), box-shadow var(--trans);
+  transition: color var(--trans), background var(--trans), box-shadow var(--trans), transform var(--trans);
   outline: none;
 }
 .cat-btn:focus, .cat-btn.focused {
-  color: var(--bg); background: var(--gold);
+  color: var(--bg); background: var(--gold-grad);
   box-shadow: var(--focus-ring);
 }
-.cat-btn.active { color: var(--gold); }
+.cat-btn.active { color: var(--gold); text-shadow: 0 0 14px rgba(201,168,76,0.35); }
 .cat-btn.active:focus, .cat-btn.active.focused {
   color: var(--bg);
 }
@@ -99,8 +106,8 @@ html, body {
 }
 #search-btn:hover svg { transform: scale(1.08); }
 #search-btn:focus, #search-btn.focused {
-  color: var(--bg); background: var(--gold); border-color: var(--gold);
-  box-shadow: var(--focus-ring), 0 0 18px rgba(201,168,76,0.45);
+  color: var(--bg); background: var(--gold-grad); border-color: var(--gold);
+  box-shadow: var(--focus-ring), 0 0 22px rgba(201,168,76,0.5);
   transform: scale(1.06);
 }
 
@@ -123,8 +130,9 @@ html, body {
 #hero-bg::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(10,10,15,0.55) 25%, rgba(10,10,15,0.1) 60%, transparent),
-              linear-gradient(to top, rgba(10,10,15,0.7) 0%, transparent 35%);
+  background: linear-gradient(90deg, rgba(10,10,15,0.62) 25%, rgba(10,10,15,0.12) 60%, transparent),
+              linear-gradient(to top, rgba(10,10,15,0.85) 0%, rgba(10,10,15,0.15) 40%, transparent 65%),
+              radial-gradient(ellipse 800px 400px at 0% 100%, rgba(201,168,76,0.08), transparent 70%);
 }
 #hero-content {
   position: relative; z-index: 2;
@@ -140,7 +148,7 @@ html, body {
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   line-height: 0.95; letter-spacing: 2px;
   color: #fff; margin-bottom: 10px;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 24px rgba(0,0,0,0.9), 0 0 40px rgba(201,168,76,0.15);
 }
 #hero-synopsis {
   font-size: 0.75rem; line-height: 1.5; color: rgba(232,232,240,0.8);
@@ -155,13 +163,13 @@ html, body {
   cursor: pointer; display: flex; align-items: center; gap: 8px;
   transition: all var(--trans); outline: none; letter-spacing: 0.5px;
 }
-.hero-btn.primary { background: var(--gold); color: #000; border-color: var(--gold); }
-.hero-btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); border-color: rgba(255,255,255,0.2); }
+.hero-btn.primary { background: var(--gold-grad); color: #000; border-color: var(--gold); box-shadow: 0 6px 20px rgba(201,168,76,0.25); }
+.hero-btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); border-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
 .hero-btn:focus, .hero-btn.focused {
   box-shadow: var(--focus-ring);
   transform: scale(1.04);
 }
-.hero-btn.primary:focus, .hero-btn.primary.focused { background: #e8c060; }
+.hero-btn.primary:focus, .hero-btn.primary.focused { background: linear-gradient(135deg, #f0d28e, #e8c060); }
 
 /* ===== HERO DOTS ===== */
 #hero-dots {
@@ -189,7 +197,7 @@ html, body {
   color: var(--text); padding: 0 48px 14px;
   display: flex; align-items: center; gap: 12px;
 }
-.section-title .section-accent { color: var(--gold); }
+.section-title .section-accent { background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .section-title .section-count {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.72rem; font-weight: 500; color: var(--text-dim);
@@ -210,18 +218,19 @@ html, body {
   width: 260px;
   border-radius: 10px; overflow: visible;
   cursor: pointer; outline: none !important;
-  transition: transform var(--trans), box-shadow var(--trans);
+  transition: transform var(--trans), box-shadow var(--trans), filter var(--trans);
 }
 .card:focus, .card.focused {
   transform: scale(1.08) translateZ(0);
   will-change: transform;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.8);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.85), 0 0 0 2px rgba(201,168,76,0.35), 0 0 30px rgba(201,168,76,0.18);
   z-index: 10;
 }
 .card-poster-wrap {
   position: relative; width: 100%; aspect-ratio: 16/9;
   border-radius: 10px; overflow: hidden;
   background: var(--bg3);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 .card-poster {
   width: 100%; height: 100%;
@@ -260,10 +269,10 @@ html, body {
 }
 .card-play-icon {
   width: 48px; height: 48px; border-radius: 50%;
-  background: rgba(201,168,76,0.92);
+  background: var(--gold-grad);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem; color: #000;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.65), 0 0 18px rgba(201,168,76,0.35);
 }
 .card-watched-time {
   position: absolute; right: 8px; bottom: 10px; z-index: 5;
@@ -285,6 +294,7 @@ html, body {
   font-size: 6rem; line-height: 1;
   color: transparent;
   -webkit-text-stroke: 2px var(--gold-dim);
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
   z-index: 1; pointer-events: none;
   user-select: none;
 }
@@ -301,7 +311,8 @@ html, body {
 #empty-state .empty-icon { font-size: 4rem; margin-bottom: 20px; opacity: 0.4; }
 #empty-state h2 {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.5rem; letter-spacing: 3px; color: var(--gold); margin-bottom: 12px;
+  font-size: 2.5rem; letter-spacing: 3px; margin-bottom: 12px;
+  background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 #empty-state p { color: var(--text-dim); font-size: 0.95rem; line-height: 1.7; max-width: 420px; }
 
@@ -403,11 +414,11 @@ html, body {
 }
 .player-btn:hover { background: rgba(255,255,255,0.14); }
 .player-btn:focus, .player-btn.focused {
-  background: var(--gold); color: #000; border-color: var(--gold);
+  background: var(--gold-grad); color: #000; border-color: var(--gold);
   box-shadow: var(--focus-ring); transform: scale(1.08);
 }
 #player-playpause-btn { width: 58px; height: 58px; font-size: 1.4rem; background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.35); }
-#player-playpause-btn:focus, #player-playpause-btn.focused { background: var(--gold); }
+#player-playpause-btn:focus, #player-playpause-btn.focused { background: var(--gold-grad); }
 
 #player-next-btn {
   width: auto; border-radius: 24px; padding: 0 18px;
@@ -424,23 +435,27 @@ html, body {
   z-index: 11;
   width: auto;
   height: auto;
-  padding: 12px 22px;
-  border-radius: 8px;
-  background: rgba(20,20,20,0.78);
-  border: 1.5px solid rgba(255,255,255,0.5);
-  color: #fff;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(32,30,24,0.72), rgba(14,13,10,0.78));
+  border: 1px solid rgba(201,168,76,0.45);
+  color: #f3e7c4;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: background 0.15s, transform 0.15s, opacity 0.2s;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
+  transition: background 0.15s, transform 0.15s, opacity 0.2s, box-shadow 0.15s, border-color 0.15s;
 }
 #player-skip-intro-btn.visible { display: block; opacity: 1; animation: skipIntroIn 0.25s ease; }
-#player-skip-intro-btn:hover { background: rgba(40,40,40,0.9); }
+#player-skip-intro-btn:hover {
+  background: linear-gradient(135deg, rgba(45,40,28,0.82), rgba(20,18,13,0.86));
+  border-color: rgba(201,168,76,0.7);
+}
 #player-skip-intro-btn:focus, #player-skip-intro-btn.focused {
-  background: var(--gold); color: #111; border-color: var(--gold);
+  background: var(--gold-grad); color: #111; border-color: var(--gold);
   box-shadow: var(--focus-ring); transform: scale(1.05); outline: none;
 }
 @keyframes skipIntroIn {
@@ -503,7 +518,8 @@ html, body {
 #search-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
 #search-header h2 {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem; letter-spacing: 3px; color: var(--gold);
+  font-size: 2rem; letter-spacing: 3px;
+  background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 #search-input-display {
   flex: 1; padding: 14px 20px; border-radius: 8px;
@@ -533,7 +549,7 @@ html, body {
 .kb-key.wide { width: 80px; font-size: 0.75rem; }
 .kb-key.space { width: 200px; }
 .kb-key:focus, .kb-key.focused {
-  background: var(--gold); color: #000;
+  background: var(--gold-grad); color: #000;
   box-shadow: var(--focus-ring);
   transform: scale(1.08);
 }
@@ -575,15 +591,18 @@ html, body {
 }
 #info-overlay.visible { display: flex; }
 #info-box {
-  background: var(--bg2); border: 1px solid rgba(201,168,76,0.2);
+  background: linear-gradient(160deg, var(--bg2), #0d0d13);
+  border: 1px solid rgba(201,168,76,0.25);
   border-radius: 16px; padding: 36px; max-width: 700px; width: 90%;
   display: flex; gap: 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(201,168,76,0.06);
 }
 #info-poster { width: 220px; flex-shrink: 0; border-radius: 10px; aspect-ratio: 16/9; object-fit: cover; background: var(--bg3); }
 #info-content { flex: 1; }
 #info-title {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 2rem; letter-spacing: 2px; margin-bottom: 8px; color: var(--text);
+  text-shadow: 0 2px 16px rgba(0,0,0,0.5);
 }
 #info-cat {
   font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px;
@@ -595,7 +614,7 @@ html, body {
   padding: 10px 22px; border-radius: 6px; border: 2px solid transparent;
   cursor: pointer; transition: all var(--trans); outline: none;
 }
-.info-btn.primary { background: var(--gold); color: #000; border-color: var(--gold); }
+.info-btn.primary { background: var(--gold-grad); color: #000; border-color: var(--gold); box-shadow: 0 4px 16px rgba(201,168,76,0.2); }
 .info-btn.secondary { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.2); }
 .info-btn.danger { background: transparent; color: var(--red); border-color: var(--red); }
 .info-btn:focus, .info-btn.focused { box-shadow: var(--focus-ring); transform: scale(1.04); }
@@ -606,7 +625,7 @@ html, body {
   padding: 7px 16px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.18);
   background: transparent; color: var(--text); cursor: pointer; transition: all var(--trans); outline: none;
 }
-.season-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
+.season-btn.active { background: var(--gold-grad); color: #000; border-color: var(--gold); }
 .season-btn:focus, .season-btn.focused { box-shadow: var(--focus-ring); transform: scale(1.05); }
 
 #info-episodes-row { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
@@ -1010,6 +1029,90 @@ const DEMO_CATALOG = [
   // En la card del catálogo solo aparece UNA vez "Stranger Things"; al abrirla, dentro de la
   // ficha aparecen los botones de temporada y, debajo, la lista de episodios de esa temporada.
 {
+  t: "Spider-Noir",
+  c: "series",
+  i: "https://image.tmdb.org/t/p/original/fj4dCkaIeZ7g8N5UJKikuKF1IF5.jpg",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: Pasa a mi oficina", h: "https://hugh.cdn.rumble.cloud/video/fww1/51/s8/2/M/l/D/t/MlDtA.aaa.mp4" },
+        { t: "Episodio 2: Actúa con cautela", h: "https://hugh.cdn.rumble.cloud/video/fww1/6e/s8/2/0/m/D/t/0mDtA.aaa.mp4" },
+        { t: "Episodio 3: Emboscada", h: "https://hugh.cdn.rumble.cloud/video/fwe2/05/s8/2/2/o/D/t/2oDtA.aaa.mp4" },
+        { t: "Episodio 4: Un error que no volveré a cometer", h: "https://hugh.cdn.rumble.cloud/video/fww1/56/s8/2/A/p/D/t/ApDtA.aaa.mp4" },
+        { t: "Episodio 5: Traición", h: "https://hugh.cdn.rumble.cloud/video/fwe2/76/s8/2/8/o/D/t/8oDtA.aaa.mp4" },
+        { t: "Episodio 6: Pesadilla en una camilla", h: "https://hugh.cdn.rumble.cloud/video/fwe2/6a/s8/2/C/o/D/t/CoDtA.aaa.mp4" },
+        { t: "Episodio 7: No soy un héroe", h: "https://hugh.cdn.rumble.cloud/video/fwe2/61/s8/2/4/W/C/t/4WCtA.aaa.mp4" },
+        { t: "Episodio 8: El hombre de la máscara", h: "https://hugh.cdn.rumble.cloud/video/fwe2/3b/s8/2/8/f/f/u/8ffuA.aaa.mp4" }
+      ]
+    }
+  ]
+},
+{
+  t: "La chica nueva: El reinicio",
+  c: "series",
+  i: "https://i.ytimg.com/vi/owIQLK6cXgE/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBNRzHgPRCKEJEH0L9Dumr5Rjfm0g",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: Sky", h: "https://hugh.cdn.rumble.cloud/video/fww1/8a/s8/2/m/F/v/9/mFv9z.aaa.mp4" },
+        { t: "Episodio 2: Ropa Interior", h: "https://hugh.cdn.rumble.cloud/video/fww1/0c/s8/2/a/g/M/a/agMaA.aaa.mp4" },
+        { t: "Episodio 3: Hater", h: "https://hugh.cdn.rumble.cloud/video/fww1/de/s8/2/y/w/0/a/yw0aA.aaa.mp4" },
+        { t: "Episodio 4: OnlyNanno", h: "https://hugh.cdn.rumble.cloud/video/fww1/a2/s8/2/k/w/0/a/kw0aA.aaa.mp4" },
+        { t: "Episodio 5: Mentiras y corrupción", h: "https://hugh.cdn.rumble.cloud/video/fwe2/ed/s8/2/E/5/x/g/E5xgA.aaa.mp4" },
+        { t: "Episodio 6: Episodio 6", h: "https://hugh.cdn.rumble.cloud/video/fwe2/58/s8/2/w/E/s/g/wEsgA.aaa.mp4" }
+      ]
+    }
+  ]
+},
+{
+  t: "Euphoria",
+  c: "series",
+  i: "https://image.tmdb.org/t/p/original/4yRqdgulLRtcCO5ZUOs2G5v874l.jpg",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: Piloto", h: "https://hugh.cdn.rumble.cloud/video/s8/2/W/u/5/3/Wu53u.aaa.mp4" },
+        { t: "Episodio 2: Haciendo Acrobacias como mi Papá", h: "https://1a-1791.com/video/s8/2/T/l/5/s/Tl5ss.aaa.mp4" },
+        { t: "Episodio 3: Te Hice Mirar", h: "https://hugh.cdn.rumble.cloud/video/s8/2/n/v/6/3/nv63u.aaa.mp4" },
+        { t: "Episodio 4: Sacudió Uno Pt. II", h: "https://hugh.cdn.rumble.cloud/video/s8/2/G/q/7/3/Gq73u.aaa.mp4" },
+        { t: "Episodio 5: '03 Bonnie y Clyde", h: "https://hugh.cdn.rumble.cloud/video/s8/2/R/z/3/H/Rz3Hs.aaa.mp4" },
+        { t: "Episodio 6: El Próximo Episodio", h: "https://1a-1791.com/video/s8/2/f/T/8/3/fT83u.aaa.mp4" },
+        { t: "Episodio 7: Las Dificultades de Intentar Orinar Estando Deprimido", h: "https://hugh.cdn.rumble.cloud/video/s8/2/i/h/O/4/ihO4u.aaa.mp4" },
+        { t: "Episodio 8: Y Salar la Tierra Detrás de Ti", h: "https://hugh.cdn.rumble.cloud/video/s8/2/R/j/Q/4/RjQ4u.aaa.mp4" }
+      ]
+    },
+    {
+      n: 2,
+      episodes: [
+        { t: "Episodio 1: Tratando de Llegar al Cielo Antes de que Cierren la Puerta", h: "https://hugh.cdn.rumble.cloud/video/s8/2/K/0/Q/4/K0Q4u.aaa.mp4" },
+        { t: "Episodio 2: Fuera de Contacto", h: "https://1a-1791.com/video/s8/2/E/x/S/4/ExS4u.aaa.mp4" },
+        { t: "Episodio 3: Reflexiones: Grandes y Pequeños Matones", h: "https://1a-1791.com/video/s8/2/X/L/S/4/XLS4u.aaa.mp4" },
+        { t: "Episodio 4: Tú Que No Puedes Ver, Piensa En Los Que Pueden", h: "https://hugh.cdn.rumble.cloud/video/s8/2/x/K/S/4/xKS4u.aaa.mp4" },
+        { t: "Episodio 5: Quédate Quieto Como el Colibrí", h: "https://1a-1791.com/video/s8/2/t/L/S/4/tLS4u.aaa.mp4" },
+        { t: "Episodio 6: Mil Arbolitos de Sangre", h: "https://1a-1791.com/video/s8/2/7/U/6/4/7U64u.aaa.mp4" },
+        { t: "Episodio 7: El Teatro y su Doble", h: "https://hugh.cdn.rumble.cloud/video/s8/2/C/Y/6/4/CY64u.aaa.mp4" },
+        { t: "Episodio 8: Toda Mi Vida, Mi Corazón ha Anhelado Algo Que No Puedo Nombrar", h: "https://hugh.cdn.rumble.cloud/video/s8/2/B/f/7/4/Bf74u.aaa.mp4" }
+      ]
+    },
+    {
+      n: 3,
+      episodes: [
+        { t: "Episodio 1: Ándale", h: "https://1a-1791.com/video/fww1/e7/s8/2/4/p/P/e/4pPeA.aaa.mp4" },
+        { t: "Episodio 2: América, Mi Sueño", h: "https://hugh.cdn.rumble.cloud/video/fwe2/c9/s8/2/w/_/O/g/w_OgA.aaa.mp4" },
+        { t: "Episodio 3: La Balada de Paladin", h: "https://1a-1791.com/video/fww1/03/s8/2/u/L/O/i/uLOiA.aaa.mp4" },
+        { t: "Episodio 4: A Kitty le Gusta Bailar", h: "https://hugh.cdn.rumble.cloud/video/fww1/58/s8/2/4/e/P/k/4ePkA.aaa.mp4" },
+        { t: "Episodio 5: Este Cerdito", h: "https://hugh.cdn.rumble.cloud/video/fww1/57/s8/2/k/S/Q/m/kSQmA.aaa.mp4" },
+        { t: "Episodio 6: Detente y Observa", h: "https://hugh.cdn.rumble.cloud/video/fww1/44/s8/2/Q/B/V/o/QBVoA.aaa.mp4" },
+        { t: "Episodio 7: Llueva o haga sol", h: "https://hugh.cdn.rumble.cloud/video/fww1/17/s8/2/K/r/a/r/KrarA.aaa.mp4" },
+        { t: "Episodio 8: En Dios confiamos", h: "https://hugh.cdn.rumble.cloud/video/fwe2/5a/s8/2/0/1/5/s/015sA.aaa.mp4" }
+      ]
+    }
+  ]
+},
+{
   t: "Citadel Honey Bunny",
   c: "series",
   i: "https://image.tmdb.org/t/p/original/hf3mq5cfXTdKHiW3UkZwSxbkx1A.jpg",
@@ -1081,6 +1184,37 @@ const DEMO_CATALOG = [
 
   // ====== EJEMPLO: ANIME con 3 temporadas, mismo patrón agrupado ======
 {
+  t: "Fate/strange Fake",
+  c: "anime",
+  i: "https://image.tmdb.org/t/p/original/nvMDpmZJrXsDejZi0eGO9261gqL.jpg",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: Guerra Falsa", h: "https://1a-1791.com/video/fwe2/97/s8/2/Y/E/O/R/YEORz.aaa.mp4" },
+        { t: "Episodio 2: El Rey y su Amigo", h: "https://1a-1791.com/video/fww1/be/s8/2/E/t/P/R/EtPRz.aaa.mp4" },
+        { t: "Episodio 3: Invocaciones Irregulares", h: "https://hugh.cdn.rumble.cloud/video/fwe2/5a/s8/2/m/E/P/R/mEPRz.aaa.mp4" },
+        { t: "Episodio 4: Aria de la Locura", h: "https://1a-1791.com/video/fww1/5b/s8/2/Q/c/A/T/QcATz.aaa.mp4" },
+        { t: "Episodio 5: Interludio en la Ciudad", h: "https://hugh.cdn.rumble.cloud/video/fwe2/60/s8/2/I/1/G/V/I1GVz.aaa.mp4" },
+        { t: "Episodio 6: El Banquete de los Héroes", h: "https://hugh.cdn.rumble.cloud/video/fwe2/3a/s8/2/Q/D/V/X/QDVXz.aaa.mp4" },
+        { t: "Episodio 7: Danza de Sombras", h: "https://hugh.cdn.rumble.cloud/video/fww1/8c/s8/2/E/R/Y/Z/ERYZz.aaa.mp4" },
+        { t: "Episodio 8: Cáliz de Discordia", h: "https://player.zilla-networks.com/m3u8/bb7e91bb07fd1155200330e07e597cf2" },
+        { t: "Episodio 9: Juramentos de Sangre", h: "https://player.zilla-networks.com/m3u8/88a85642060615d1ab51354d642a920c" },
+        { t: "Episodio 10: El Regreso del Miedo", h: "https://player.zilla-networks.com/m3u8/9a2baa3146f20bc6c6712524bb9add5e" },
+        { t: "Episodio 11: Fragmentos de Destino", h: "https://player.zilla-networks.com/m3u8/62674e57934627364219c62fa303f434" },
+        { t: "Episodio 12: Vísperas del Caos", h: "https://player.zilla-networks.com/m3u8/52963be1d92b3597109926426dc720ed" },
+        { t: "Episodio 13: El Fin del Principio", h: "https://player.zilla-networks.com/m3u8/2cb5d740b2b18d8d5b516583084b4a8e" }
+      ]
+    }
+  ]
+},
+{
+  t: "Kaiju No. 8: Misión de reconocimiento",
+  c: "anime",
+  i: "https://image.tmdb.org/t/p/original/wtErtV3SYrVF0tH1XWu13EE6aMs.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/5d/s8/2/M/J/8/9/MJ89y.aaa.mp4"
+},
+{
   t: "Elfen Lied",
   c: "anime",
   i: "https://image.tmdb.org/t/p/original/lewWPFjUjXkJgXV9C8yzN35fiu1.jpg",
@@ -1107,6 +1241,48 @@ const DEMO_CATALOG = [
     ]
   },
   {
+  t: "Harry Potter y la piedra filosofal",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/gpQeZl2Sx8QKSxx9PabjX6Q14y4.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/s8/2/N/Y/J/V/NYJVp.aaa.mp4"
+},
+  {
+  t: "Harry Potter y la cámara secreta",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/fjN1i7uH4KDVbNmfBBZeuF98J83.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/s8/2/F/A/3/L/FA3Lq.aaa.mp4"
+},
+  {
+  t: "Harry Potter y el prisionero de Azkaban",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/m8XhUVtuCksm13QlPSYo0C2WviD.jpg",
+  h: "https://1a-1791.com/video/s8/2/I/y/M/4/IyM4q.aaa.mp4"
+},
+  {
+  t: "Harry Potter y el cáliz de fuego",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/5mOwcl9lKx52RTWLkpPOck4EryM.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/s8/2/k/a/0/4/ka04q.aaa.mp4"
+},
+  {
+  t: "Harry Potter y la orden del Fénix",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/5NtizQVwcusXA4DWUPdknlN8dsP.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/s8/2/x/A/U/8/xAU8q.aaa.mp4"
+},
+  {
+  t: "Harry Potter y el misterio del príncipe",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/mahovPKn8ROe94KML4LgCSBTK4B.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/s8/2/e/o/o/e/eooer.aaa.mp4"
+},
+  {
+  t: "Harry Potter y las reliquias de la muerte (1ª parte)",
+  c: "fantasia",
+  i: "https://image.tmdb.org/t/p/original/rsjVwImiIyehTEOGLDlYwtmwKPu.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/s8/2/b/b/2/e/bb2er.aaa.mp4"
+},
+  {
     t: "Harry Potter and the Deathly Hallows: Part 2",
     c: "fantasia",
     i: "https://image.tmdb.org/t/p/original/nhbn3XYiRZ2N2V3b1JxBIskAlmY.jpg",
@@ -1124,6 +1300,36 @@ const DEMO_CATALOG = [
     i: "https://image.tmdb.org/t/p/original/zoEuFnbRasYz0fJHKicVLGzaVXg.jpg",
     h: "https://hugh.cdn.rumble.cloud/video/fww1/ca/s8/2/2/5/f/O/25fOz.aaa.mp4"
   },
+  {
+  t: "Maze Runner: Prueba de fuego",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/A79m5muN0oi8QUQhHqViQ5Xyz60.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/93/s8/2/8/y/4/6/8y46y.aaa.mp4"
+},
+{
+  t: "Karate Kid: Leyendas",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/cxT6YtYkujShVVAwz1F5FfIcUJX.jpg",
+  h: "https://1a-1791.com/video/fww1/f9/s8/2/i/X/N/3/iXN3y.aaa.mp4"
+},
+{
+  t: "Bad Boys: Hasta la muerte",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/A3EfIdSs7Y1dnUqSSTpuDFxH4zQ.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/c4/s8/2/S/M/r/3/SMr3y.aaa.mp4"
+},
+{
+  t: "M3GAN 2.0",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/93Tq99YbUESCa4aPnThnT9x6WCB.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/59/s8/2/M/a/j/3/Maj3y.aaa.mp4"
+},
+{
+  t: "Cómo entrenar a tu dragón",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/osZ0386UBcn9RchyFXXjz7BF3wi.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/e8/s8/2/m/T/_/2/mT_2y.aaa.mp4"
+},
   {
     t: "Apocalypto",
     c: "accion",
@@ -1209,6 +1415,12 @@ const DEMO_CATALOG = [
   h: "https://hugh.cdn.rumble.cloud/video/fww1/97/s8/2/M/d/M/g/MdMgA.aaa.mp4"
 },
 {
+  t: "Más allá de la Luna",
+  c: "animacion",
+  i: "https://image.tmdb.org/t/p/original/aD4U0z1muzedsnmgprBZrL99HIS.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/9f/s8/2/w/E/8/5/wE85y.aaa.mp4"
+},
+{
   t: "Encanto",
   c: "animacion",
   i: "https://image.tmdb.org/t/p/original/n7chLrNRGvFE0UrvpxtotZLUjgd.jpg",
@@ -1231,6 +1443,12 @@ const DEMO_CATALOG = [
   c: "disney",
   i: "https://image.tmdb.org/t/p/original/jj3ohaYX5FdyUGb343hFxl4PXpT.jpg",
   h: "https://1a-1791.com/video/fww1/d7/s8/2/U/-/z/j/U-zjA.aaa.mp4"
+},
+{
+  t: "Super Mario Bros. La película",
+  c: "animacion",
+  i: "https://image.tmdb.org/t/p/original/i5jJDxYGiBBfX6obIoNXoiunplL.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/32/s8/2/4/C/7/-/4C7-y.aaa.mp4"
 },
 {
   t: "Super Mario Galaxy: La película",
@@ -1382,6 +1600,271 @@ const DEMO_CATALOG = [
   i: "https://image.tmdb.org/t/p/original/9hAgxPgaPHLGg9NUEGld194Ek05.jpg",
   h: "https://player.zilla-networks.com/m3u8/4e206d07be45216dfeb8e554aa378beb"
 },
+{
+  t: "Titanic",
+  c: "romance",
+  i: "https://image.tmdb.org/t/p/original/tBEp5F0tUM105IdBTOmyJB5LZgG.jpg",
+  h: "https://1a-1791.com/video/fww1/00/s8/2/m/M/C/f/mMCfA.aaa.mp4"
+},
+{
+  t: "Depredador: Tierras salvajes",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/k3wtmkySU8pHSCfjNqbp5f81DS0.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/82/s8/2/A/K/s/O/AKsOz.aaa.mp4"
+},
+{
+  t: "18 rosas",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/7PjyWrfNEjeTQ5mkhRnHa4otk10.jpg",
+  h: "https://1a-1791.com/video/fww1/1f/s8/2/g/K/y/i/gKyiA.aaa.mp4"
+},
+{
+  t: "No te olvidaré",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/kjUgHPvZT3p66kejgOzrsdhJuHC.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/a9/s8/2/M/Z/S/f/MZSfA.aaa.mp4"
+},
+{
+  t: "Drácula",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/kgc9rMqeD4JrurCDZjWRvO26rW9.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/0b/s8/2/E/K/0/q/EK0qA.aaa.mp4"
+},
+{
+  t: "(500) días con ella",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/oHupPYBUh0Dky6x44BFihvzILPo.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/a1/s8/2/C/C/Z/l/CCZlA.aaa.mp4"
+},
+{
+  t: "Ciudad de Dios",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/auidovYoWw2cdQdaheiQrvf0NHP.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/22/s8/2/C/g/B/o/CgBoA.aaa.mp4"
+},
+{
+  t: "Proyecto Florida",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/3uR7efz6mmcIyKyJPGmrKR4XuIS.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/2a/s8/2/i/N/1/s/iN1sA.aaa.mp4"
+},
+{
+  t: "Culpa mía",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/x1OB4FQD7L3xesNJ0DJBbu7tQdI.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/3c/s8/2/f/P/8/B/fP8By.aaa.mp4"
+},
+{
+  t: "Culpa tuya",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/2wN6xbmMPFVqnhQkoxNBTB5djFR.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/0c/s8/2/a/_/I/f/a_IfA.aaa.mp4"
+},
+{
+  t: "Culpa nuestra",
+  c: "drama",
+  i: "https://image.tmdb.org/t/p/original/8WhlNrtQdyUBnKrw5WBJnsDn1HE.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/5b/s8/2/2/e/_/q/2e_qz.aaa.mp4"
+},
+{
+  t: "Correr Para Vivir",
+  c: "drama",
+  i: "https://pulse.com.mx/wp-content/uploads/2024/05/portada.jpeg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/5f/s8/2/A/Q/S/N/AQSNz.aaa.mp4"
+},
+{
+  t: "La dama y el vagabundo",
+  c: "disney",
+  i: "https://image.tmdb.org/t/p/original/jbBMJWLgjVudTN5dy4xrjJF8bMk.jpg",
+  h: "https://1a-1791.com/video/s8/2/v/n/M/B/vnMBp.aaa.mp4"
+},
+{
+  t: "La hermanastra fea",
+  c: "terror",
+  i: "https://image.tmdb.org/t/p/original/9W91FlHXg5dnA8LEnCuw1T6jpcA.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/c0/s8/2/-/i/D/u/-iDuz.aaa.mp4"
+},
+{
+  t: "El Conjuro 4: Últimos ritos",
+  c: "terror",
+  i: "https://image.tmdb.org/t/p/original/rDh02R6QAQ6HIbWy0k4B8niVvzL.jpg",
+  h: "https://1a-1791.com/video/fwe2/7e/s8/2/Y/I/d/p/YIdpz.aaa.mp4"
+},
+{
+  t: "Mantis",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/cZsvmKZ8jBkXNn2m8cBfy8HTF96.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/22/s8/2/Y/8/I/n/Y8Inz.aaa.mp4"
+},
+{
+  t: "El muro negro",
+  c: "ciencia ficcion",
+  i: "https://image.tmdb.org/t/p/original/sAlFxrqBxLHrj6EmjAAz4T50FJz.jpg",
+  h: "https://1a-1791.com/video/fww1/fe/s8/2/s/O/i/6/sOi6y.aaa.mp4"
+},
+{
+  t: "Alien vs. Depredador",
+  c: "ciencia ficcion",
+  i: "https://image.tmdb.org/t/p/original/zMqzrb3q9eZ3sNMlz5aO3RX2rrW.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/41/s8/2/w/P/u/l/wPulz.aaa.mp4"
+},
+{
+  t: "Alien vs. Depredador 2",
+  c: "ciencia ficcion",
+  i: "https://image.tmdb.org/t/p/original/oiWfGYrBZtnaWow8yyR0CrsVqse.jpg",
+  h: "https://1a-1791.com/video/fww1/44/s8/2/W/i/1/k/Wi1kz.aaa.mp4"
+},
+{
+  t: "Leyendas de los héroes Cóndor: Los valientes",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/9GXBcUge9t8qqm7TvQRXLB32wx2.jpg",
+  h: "https://1a-1791.com/video/fww1/bf/s8/2/G/W/g/j/GWgjz.aaa.mp4"
+},
+{
+  t: "Tirador",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/1p904rjEXPX1eHBj9xVXu7HkJry.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/a3/s8/2/U/K/k/i/UKkiz.aaa.mp4"
+},
+{
+  t: "365 días",
+  c: "romance",
+  i: "https://image.tmdb.org/t/p/original/am7bBtf7RUDCjRVf3rU3WpDMreG.jpg",
+  h: "https://1a-1791.com/video/fww1/17/s8/2/6/C/K/f/6CKfz.aaa.mp4"
+},
+{
+  t: "365 días: Aquel Día",
+  c: "romance",
+  i: "https://image.tmdb.org/t/p/original/j3QAwKBfF2JGZrxP6UuxxP0tLN5.jpg",
+  h: "https://1a-1791.com/video/fww1/6f/s8/2/4/p/I/f/4pIfz.aaa.mp4"
+},
+{
+  t: "Lilo y Stitch",
+  c: "disney",
+  i: "https://image.tmdb.org/t/p/original/aY8ov4cOL3Zvr66ndiAHStwH5fM.jpg",
+  h: "https://1a-1791.com/video/fww1/37/s8/2/2/2/_/4/22_4y.aaa.mp4"
+},
+{
+  t: "¿Y dónde está el fantasma?",
+  c: "comedia",
+  i: "https://image.tmdb.org/t/p/original/ehGb5fEKWDjxDGpxeutFmoZLStF.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/0e/s8/2/8/X/_/4/8X_4y.aaa.mp4"
+},
+{
+  t: "¿Y dónde está el fantasma? 2",
+  c: "comedia",
+  i: "https://image.tmdb.org/t/p/original/tMbA23jaJ8n1rEgPs02AFr5FnP7.jpg",
+  h: "https://1a-1791.com/video/fww1/80/s8/2/U/Z/_/4/UZ_4y.aaa.mp4"
+},
+{
+  t: "Sé lo que hicieron el verano pasado",
+  c: "suspenso",
+  i: "https://image.tmdb.org/t/p/original/dhVbdfEBR7zhPRJK6k82hbvMZVX.jpg",
+  h: "https://1a-1791.com/video/fww1/f2/s8/2/-/U/V/c/-UVcz.aaa.mp4"
+},
+{
+  t: "Superman",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/HQorbRuFTBlTbV6stD8FrvERso.jpg",
+  h: "https://1a-1791.com/video/fww1/b9/s8/2/c/i/h/a/cihaz.aaa.mp4"
+},
+{
+  t: "Jurassic World: Renace",
+  c: "ciencia ficcion",
+  i: "https://image.tmdb.org/t/p/original/ypCvxZzZu0bFhIf9beBPIwVNsto.jpg",
+  h: "https://1a-1791.com/video/fww1/25/s8/2/8/B/b/a/8Bbaz.aaa.mp4"
+},
+{
+  t: "Inframundo 3: La rebelión de los Lycans",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/ijaVrtIP6OhPW2KRogUbYwcL9gY.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/1f/s8/2/o/Q/h/-/oQh-y.aaa.mp4"
+},
+{
+  t: "Inframundo",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/jEPueckJEPPBBcSSRWv4NSj5Rxt.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/1f/s8/2/2/M/-/9/2M-9y.aaa.mp4"
+},
+{
+  t: "Inframundo: La Evolución",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/3rsF8rPzrmGThC0WXMVMpWm82VC.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/34/s8/2/A/6/a/-/A6a-y.aaa.mp4"
+},
+{
+  t: "Juana de Arco",
+  c: "accion",
+  i: "https://image.tmdb.org/t/p/original/mb83V9B6ldN3w3u1ZnpYKbN0cXZ.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/25/s8/2/m/X/h/-/mXh-y.aaa.mp4"
+},
+{
+  t: "Verano infernal",
+  c: "comedia",
+  i: "https://image.tmdb.org/t/p/original/zS5iJJz9GT4FLcdC02mMZdlznOb.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/a2/s8/2/k/x/f/-/kxf-y.aaa.mp4"
+},
+{
+  t: "What If...?",
+  c: "marvel",
+  i: "https://image.tmdb.org/t/p/original/nILmeH79FTH8b1sKuNVg89duPrG.jpg",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: ¿Qué pasaría si... la capitana Carter fuera la primera vengadora?", h: "https://1a-1791.com/video/fww1/d1/s8/2/Y/w/V/9/YwV9y.aaa.mp4" },
+        { t: "Episodio 2: ¿Qué pasaría si… T'Challa se convirtiera en Star-Lord?", h: "https://1a-1791.com/video/fww1/9b/s8/2/a/A/V/9/aAV9y.aaa.mp4" },
+        { t: "Episodio 3: ¿Qué pasaría si... el mundo perdiera a sus héroes más poderosos?", h: "https://hugh.cdn.rumble.cloud/video/fww1/9d/s8/2/W/z/V/9/WzV9y.aaa.mp4" },
+        { t: "Episodio 4: ¿Qué pasaría si… el Doctor Strange perdiera su corazón en vez de sus manos?", h: "https://hugh.cdn.rumble.cloud/video/fww1/c5/s8/2/M/A/V/9/MAV9y.aaa.mp4" },
+        { t: "Episodio 5: ¿Qué pasaría si... ¡hubiera zombis!?", h: "https://hugh.cdn.rumble.cloud/video/fww1/71/s8/2/-/z/V/9/-zV9y.aaa.mp4" },
+        { t: "Episodio 6: ¿Qué pasaría si… Killmonger rescatara a Tony Stark?", h: "https://1a-1791.com/video/fww1/ef/s8/2/G/z/V/9/GzV9y.aaa.mp4" },
+        { t: "Episodio 7: ¿Qué pasaría si... Thor fuera hijo único?", h: "https://hugh.cdn.rumble.cloud/video/fww1/17/s8/2/Q/A/V/9/QAV9y.aaa.mp4" },
+        { t: "Episodio 8: ¿Qué pasaría si... Ultrón ganara?", h: "https://hugh.cdn.rumble.cloud/video/fww1/72/s8/2/O/z/V/9/OzV9y.aaa.mp4" },
+        { t: "Episodio 9: ¿Qué pasaría si... el Vigilante rompiera su juramento?", h: "https://hugh.cdn.rumble.cloud/video/fww1/c8/s8/2/W/A/V/9/WAV9y.aaa.mp4" }
+      ]
+    },
+    {
+      n: 2,
+      episodes: [
+        { t: "Episodio 1: ¿Qué pasaría si... Nebula se uniera al Nova Corps?", h: "https://1a-1791.com/video/fww1/ec/s8/2/w/n/9/9/wn99y.aaa.mp4" },
+        { t: "Episodio 2: ¿Qué pasaría si... Peter Quill atacara a los héroes más poderosos de la Tierra?", h: "https://hugh.cdn.rumble.cloud/video/fww1/a7/s8/2/o/q/9/9/oq99y.aaa.mp4" },
+        { t: "Episodio 3: ¿Qué pasaría si... Happy Hogan salvara la Navidad?", h: "https://1a-1791.com/video/fww1/34/s8/2/m/o/9/9/mo99y.aaa.mp4" },
+        { t: "Episodio 4: ¿Qué pasaría si... Iron Man chocara contra el Gran Maestro?", h: "https://1a-1791.com/video/fww1/a6/s8/2/O/s/9/9/Os99y.aaa.mp4" },
+        { t: "Episodio 5: ¿Qué pasaría si... la Capitana Carter luchara contra el Hydra Stomper?", h: "https://1a-1791.com/video/fww1/97/s8/2/s/s/9/9/ss99y.aaa.mp4" },
+        { t: "Episodio 6: ¿Qué pasaría si... Kahhori reformara el mundo?", h: "https://hugh.cdn.rumble.cloud/video/fww1/8f/s8/2/0/s/9/9/0s99y.aaa.mp4" },
+        { t: "Episodio 7: ¿Qué pasaría si... Hela encontrara los diez anillos?", h: "https://hugh.cdn.rumble.cloud/video/fww1/13/s8/2/k/r/9/9/kr99y.aaa.mp4" },
+        { t: "Episodio 8: ¿Qué pasaría si... Los Vengadores se reunieran en 1602?", h: "https://hugh.cdn.rumble.cloud/video/fww1/c2/s8/2/O/q/9/9/Oq99y.aaa.mp4" },
+        { t: "Episodio 9: ¿Qué pasaría si... Strange Supremo interviniera?", h: "https://hugh.cdn.rumble.cloud/video/fww1/7c/s8/2/g/B/0/9/gB09y.aaa.mp4" }
+      ]
+    },
+    {
+      n: 3,
+      episodes: [
+        { t: "Episodio 1: Episodio 1", h: "https://hugh.cdn.rumble.cloud/video/fww1/39/s8/2/c/V/_/9/cV_9y.aaa.mp4" },
+        { t: "Episodio 2: Episodio 2", h: "https://hugh.cdn.rumble.cloud/video/fww1/b3/s8/2/S/X/_/9/SX_9y.aaa.mp4" },
+        { t: "Episodio 3: Episodio 3", h: "https://hugh.cdn.rumble.cloud/video/fww1/8a/s8/2/G/Y/_/9/GY_9y.aaa.mp4" },
+        { t: "Episodio 4: Episodio 4", h: "https://hugh.cdn.rumble.cloud/video/fww1/11/s8/2/W/Y/_/9/WY_9y.aaa.mp4" },
+        { t: "Episodio 5: Episodio 5", h: "https://hugh.cdn.rumble.cloud/video/fww1/5a/s8/2/C/Z/_/9/CZ_9y.aaa.mp4" },
+        { t: "Episodio 6: Episodio 6", h: "https://hugh.cdn.rumble.cloud/video/fww1/40/s8/2/A/Z/_/9/AZ_9y.aaa.mp4" },
+        { t: "Episodio 7: Episodio 7", h: "https://hugh.cdn.rumble.cloud/video/fww1/00/s8/2/G/M/e/-/GMe-y.aaa.mp4" },
+        { t: "Episodio 8: Episodio 8", h: "https://1a-1791.com/video/fww1/c3/s8/2/S/O/e/-/SOe-y.aaa.mp4" }
+      ]
+    }
+  ]
+},
+{
+  t: "Nueva en la ciudad",
+  c: "comedia",
+  i: "https://image.tmdb.org/t/p/original/h2QMuBz6336r8eoLSn3HhrPmClQ.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/8f/s8/2/Y/h/G/7/YhG7y.aaa.mp4"
+},
+{
+  t: "Sneaks: Un Par Con Suerte",
+  c: "animacion",
+  i: "https://image.tmdb.org/t/p/original/x6aaTNAKRS7PYnqWhelKr7dpf4Y.jpg",
+  h: "https://1a-1791.com/video/fww1/bc/s8/2/a/2/_/4/a2_4y.aaa.mp4"
+},
+
 
 ];
 
@@ -2051,11 +2534,11 @@ function resetIntroUI() {
 }
 
 // Vigía: mientras el botón esté visible, lo oculta automáticamente en cuanto
-// el video pasa el punto estimado de fin de intro.
+// el video pasa la ventana máxima donde tiene sentido seguir ofreciendo el salto.
 function watchSkipBtn(video) {
   const tick = () => {
     if (!State.playerVisible || !State.introBtnVisible) { State.introWatchRAF = null; return; }
-    if (video.currentTime >= State.introTargetTime || video.currentTime > State.introWindowEnd) {
+    if (video.currentTime > State.introWindowEnd) {
       hideSkipIntroBtn();
       return;
     }
@@ -2105,10 +2588,10 @@ function hideSkipIntroBtn() {
 
 function skipIntro() {
   const video = qs('#player-video');
-  if (!State.introTargetTime) return;
-  try { video.currentTime = State.introTargetTime; } catch (e) {}
-  hideSkipIntroBtn();
-  focus(qs('#player-playpause-btn'));
+  try { video.currentTime = (video.currentTime || 0) + 10; } catch (e) {}
+  // No se oculta: se deja disponible para seguir adelantando de 10 en 10,
+  // y para que reaparezca junto con el resto de los controles del reproductor.
+  focus(qs('#player-skip-intro-btn'));
 }
 
 function openPlayer(item, context) {
