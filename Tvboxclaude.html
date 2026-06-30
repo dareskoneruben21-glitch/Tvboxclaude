@@ -244,6 +244,13 @@ html, body {
   z-index: 3;
 }
 .card:focus .card-overlay, .card.focused .card-overlay { opacity: 1; }
+.card-progress-track {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+  background: rgba(255,255,255,0.25); z-index: 4;
+}
+.card-progress-fill {
+  height: 100%; background: var(--red, #e50914);
+}
 .card-play-icon {
   width: 48px; height: 48px; border-radius: 50%;
   background: rgba(201,168,76,0.92);
@@ -851,6 +858,8 @@ const State = {
   catalog: [],
   filtered: [],
   myList: [],
+  progress: {},
+  lastProgressSaveAt: 0,
   activeCategory: 'all',
   currentFocusEl: null,
   heroItem: null,
@@ -1211,6 +1220,30 @@ const DEMO_CATALOG = [
   i: "https://image.tmdb.org/t/p/original/q0aIpg6hiM9PafhGUknEPDBA6bW.jpg",
   h: "https://1a-1791.com/video/fwe2/30/s8/2/W/Y/w/a/WYwaA.aaa.mp4"
 },
+{
+  t: "La maldición (El Grito)",
+  c: "terror",
+  i: "https://image.tmdb.org/t/p/original/ix5cJFjNFNNEtC9hTxsuxmIH8IZ.jpg",
+  h: "https://1a-1791.com/video/fww1/cc/s8/2/Q/G/J/4/QGJ4z.aaa.mp4"
+},
+{
+  t: "La maldición 2",
+  c: "terror",
+  i: "https://image.tmdb.org/t/p/original/hyY8qvjZ82r5pBISUcQIaFSKv22.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fww1/b4/s8/2/O/F/J/4/OFJ4z.aaa.mp4"
+},
+{
+  t: "La maldición 3 (El Grito 3)",
+  c: "terror",
+  i: "https://image.tmdb.org/t/p/original/23LfsCO7z7d3MPVbS0qUk2y1iJ6.jpg",
+  h: "https://hugh.cdn.rumble.cloud/video/fwe2/db/s8/2/M/H/J/4/MHJ4z.aaa.mp4"
+},
+{
+  t: "La maldición renace",
+  c: "terror",
+  i: "https://image.tmdb.org/t/p/original/bYSenwevJ3e71W0aweIv0vhBrhS.jpg",
+  h: "https://1a-1791.com/video/fwe2/f3/s8/2/m/Y/Y/4/mYY4z.aaa.mp4"
+},
 
 ];
 
@@ -1220,6 +1253,7 @@ const DEMO_CATALOG = [
 function init() {
   loadCatalog();
   loadMyList();
+  loadProgress();
   buildKeyboard();
   render();
   bindGlobal();
@@ -1259,6 +1293,67 @@ function saveMyList() {
 }
 
 // ========================
+// SEGUIR VIENDO (progreso)
+// ========================
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('am_progress_v1');
+    State.progress = raw ? JSON.parse(raw) : {};
+  } catch(e) { State.progress = {}; }
+}
+
+function saveProgressMap() {
+  try { localStorage.setItem('am_progress_v1', JSON.stringify(State.progress)); } catch(e) {}
+}
+
+// Devuelve el segundo donde retomar, o 0 si no hay progreso guardado / ya terminó.
+function getResumeTime(url) {
+  const entry = url && State.progress[url];
+  if (!entry || !entry.duration) return 0;
+  if (entry.time < 10) return 0;
+  if (entry.time / entry.duration >= 0.95) return 0;
+  return entry.time;
+}
+
+// Guarda/actualiza (o elimina si terminó) el progreso de reproducción de un item.
+function recordProgress(item, context, time, duration) {
+  if (!item || !item.h || !duration || !isFinite(duration) || isNaN(duration)) return;
+  const pct = time / duration;
+  if (pct >= 0.95 || time < 5) {
+    // Terminado o apenas comenzando: no debe aparecer en "Seguir viendo"
+    if (State.progress[item.h]) {
+      delete State.progress[item.h];
+      saveProgressMap();
+    }
+    return;
+  }
+  const parent = context && context.parentItem;
+  State.progress[item.h] = {
+    time, duration,
+    title: parent ? parent.t : (item.t || ''),
+    subtitle: parent ? (item.t.split(' - ').slice(1).join(' - ') || '') : '',
+    img: parent ? parent.i : (item.i || ''),
+    cat: item.c || '',
+    resumeItem: { t: item.t, h: item.h, c: item.c },
+    parentTitle: parent ? parent.t : null,
+    seasonIndex: context ? context.seasonIndex : null,
+    episodeIndex: context ? context.episodeIndex : null,
+    updatedAt: Date.now()
+  };
+  saveProgressMap();
+}
+
+// Reanuda la reproducción de una entrada de "Seguir viendo" desde donde se quedó.
+function resumeContinueItem(entry) {
+  let context = null;
+  if (entry.parentTitle) {
+    const parent = State.catalog.find(c => c.t === entry.parentTitle);
+    if (parent) context = { parentItem: parent, seasonIndex: entry.seasonIndex, episodeIndex: entry.episodeIndex };
+  }
+  openPlayer(entry.resumeItem, context);
+}
+
+// ========================
 // RENDER
 // ========================
 function render() {
@@ -1287,6 +1382,14 @@ function render() {
   // Build sections
   cat.innerHTML = '';
   ZONES.catalog = [];
+
+  // Seguir viendo (progreso guardado), va primero al estilo Netflix
+  const continueEntries = Object.values(State.progress)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 20);
+  if (continueEntries.length) {
+    buildContinueSection(cat, continueEntries);
+  }
 
   // My List
   const myListItems = State.catalog.filter(item => State.myList.includes(item.t));
@@ -1372,27 +1475,29 @@ async function setHeroSlide(idx) {
   if (!item) return;
   State.heroItem = item;
   const bg = qs('#hero-bg');
+  const heroLogoWrap = qs('#hero-logo-wrap');
+
+  // No mostramos nada todavía (ni poster con texto ni título) hasta tener
+  // el backdrop sin texto + logo + sinopsis listos desde TMDB/Fanart/TVDB.
   qs('#hero-title').textContent = item.t || '';
+  qs('#hero-title').style.display = 'none';
   qs('#hero-synopsis').textContent = '';
   qs('#hero-badges').innerHTML = `<span class="rating-badge">${getRating(item)}</span><span class="cat-badge">${(item.c || '').toUpperCase()}</span>`;
-
-  if (item.i) bg.style.backgroundImage = `url(${item.i})`;
+  heroLogoWrap.innerHTML = '';
 
   const data = await enrichItem(item);
   // Solo actualizar si sigue siendo el mismo slide activo
-  if (HeroSlide.items[HeroSlide.current] === item) {
-    if (data.backdrop) bg.style.backgroundImage = `url(${data.backdrop})`;
-    if (data.overview) qs('#hero-synopsis').textContent = data.overview;
-  }
+  if (HeroSlide.items[HeroSlide.current] !== item) return;
 
-  const heroLogoWrap = qs('#hero-logo-wrap');
-  heroLogoWrap.innerHTML = '';
+  // Fondo: SOLO la versión sin texto (o el poster manual como último recurso si TMDB no devolvió nada)
+  bg.style.backgroundImage = `url(${data.backdrop || item.i})`;
+  if (data.overview) qs('#hero-synopsis').textContent = data.overview;
+
   if (data.logo) {
     const logoImg = document.createElement('img');
     logoImg.src = data.logo;
     logoImg.style.cssText = 'max-height:64px;max-width:280px;object-fit:contain;object-position:left;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.9))';
     logoImg.onerror = () => { heroLogoWrap.innerHTML = ''; qs('#hero-title').style.display = ''; };
-    qs('#hero-title').style.display = 'none';
     heroLogoWrap.appendChild(logoImg);
   } else {
     qs('#hero-title').style.display = '';
@@ -1402,6 +1507,31 @@ async function setHeroSlide(idx) {
 async function setHero(item) {
   // Legacy: usado al inicio antes del slideshow
   State.heroItem = item;
+}
+
+function buildContinueSection(container, entries) {
+  const sec = el('div', 'section');
+  const hdr = el('div', 'section-title');
+  hdr.innerHTML = `<span>Seguir viendo</span><span class="section-count">${entries.length} títulos</span>`;
+  const row = el('div', 'cards-row');
+
+  entries.forEach(entry => {
+    const pseudoItem = {
+      t: entry.title + (entry.subtitle ? ' - ' + entry.subtitle : ''),
+      h: entry.resumeItem.h,
+      i: entry.img,
+      c: entry.cat,
+      _isContinue: true,
+      _entry: entry
+    };
+    const card = buildCard(pseudoItem, 'continue', 0);
+    row.appendChild(card);
+    ZONES.catalog.push(card);
+  });
+
+  sec.appendChild(hdr);
+  sec.appendChild(row);
+  container.appendChild(sec);
 }
 
 function buildSection(container, title, items, type) {
@@ -1473,6 +1603,17 @@ function buildCard(item, type, idx) {
   wrap.appendChild(logoImg);
   wrap.appendChild(fallback);
   wrap.appendChild(overlay);
+
+  if (item._isContinue) {
+    const track = el('div', 'card-progress-track');
+    const fill = el('div', 'card-progress-fill');
+    const entry = item._entry;
+    const pct = entry && entry.duration ? Math.min(100, (entry.time / entry.duration) * 100) : 0;
+    fill.style.width = pct + '%';
+    track.appendChild(fill);
+    wrap.appendChild(track);
+  }
+
   card.appendChild(wrap);
 
   if (State.myList.includes(item.t)) {
@@ -1481,8 +1622,11 @@ function buildCard(item, type, idx) {
     card.appendChild(badge);
   }
 
-  // On activate: show info
-  card.addEventListener('activate', () => showInfo(item));
+  // On activate: reanudar directamente si es de "Seguir viendo", si no mostrar info
+  card.addEventListener('activate', () => {
+    if (item._isContinue) resumeContinueItem(item._entry);
+    else showInfo(item);
+  });
 
   return card;
 }
@@ -1616,6 +1760,16 @@ function closeInfo() {
 // ========================
 // PLAYER
 // ========================
+// Si hay progreso guardado para esta URL, salta a ese punto (cuando los
+// metadatos ya están listos; si no, espera al evento loadedmetadata).
+function applyResume(video, url) {
+  const resume = getResumeTime(url);
+  if (!resume) return;
+  const trySeek = () => { try { video.currentTime = resume; } catch(e) {} };
+  if (video.readyState >= 1) trySeek();
+  else video.addEventListener('loadedmetadata', trySeek, { once: true });
+}
+
 function getNextEpisode(context) {
   if (!context || !context.parentItem || !context.parentItem.seasons) return null;
   const seasons = context.parentItem.seasons;
@@ -1671,7 +1825,10 @@ function openPlayer(item, context) {
   const spinner = qs('#player-spinner');
 
   const isMP4 = /\.mp4(\?|$)/i.test(url);
-  const isM3U8 = /\.m3u8(\?|$)/i.test(url);
+  // Algunos proveedores (ej. zilla-networks) sirven streams HLS en URLs que
+  // contienen "/m3u8/" en la ruta pero NO terminan literalmente en ".m3u8"
+  // (ej: https://player.zilla-networks.com/m3u8/<hash>). Las detectamos igual.
+  const isM3U8 = /\.m3u8(\?|$)/i.test(url) || /\/m3u8\//i.test(url);
 
   if (isMP4 || isM3U8) {
     iframe.style.display = 'none';
@@ -1683,11 +1840,39 @@ function openPlayer(item, context) {
       State.hls = new Hls();
       State.hls.loadSource(url);
       State.hls.attachMedia(video);
-      State.hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      State.hls.on(Hls.Events.MANIFEST_PARSED, () => { applyResume(video, url); video.play(); });
+      State.hls.on(Hls.Events.ERROR, (_evt, data) => {
+        if (!data.fatal) return;
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            // Reintentar carga de red (manifest/segmentos) en vez de morir
+            State.hls.startLoad();
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            // Intentar recuperar errores de decodificación de medios
+            State.hls.recoverMediaError();
+            break;
+          default:
+            // Error irrecuperable: reconstruir el reproductor desde cero
+            State.hls.destroy();
+            State.hls = new Hls();
+            State.hls.loadSource(url);
+            State.hls.attachMedia(video);
+            State.hls.on(Hls.Events.MANIFEST_PARSED, () => { applyResume(video, url); video.play(); });
+            break;
+        }
+      });
+    } else if (isM3U8 && video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari / algunos WebView reproducen HLS de forma nativa sin hls.js
+      video.src = url;
+      applyResume(video, url);
+      video.play();
     } else {
       video.src = url;
+      applyResume(video, url);
       video.play();
     }
+    State.lastProgressSaveAt = 0;
     bindVideoEvents(video);
   } else {
     // iframe
@@ -1717,8 +1902,11 @@ function openPlayer(item, context) {
 
 function closePlayer() {
   State.playerVisible = false;
-  State.playerContext = null;
   const video = qs('#player-video');
+  // Guardar la posición exacta antes de limpiar el video
+  recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
+  const finishedTitle = State.playerItem && State.playerItem.t;
+  State.playerContext = null;
   video.pause();
   video.src = '';
   if (State.hls) { State.hls.destroy(); State.hls = null; }
@@ -1726,8 +1914,9 @@ function closePlayer() {
   qs('#player-spinner').classList.remove('visible');
   qs('#player-overlay').classList.remove('visible');
   clearTimeout(State.controlsTimer);
-  // return to catalog
-  const lastCard = ZONES.catalog.find(c => c.dataset.title === (State.playerItem && State.playerItem.t));
+  // Refrescar catálogo para que "Seguir viendo" muestre el progreso actualizado
+  render();
+  const lastCard = ZONES.catalog.find(c => c.dataset.title === finishedTitle);
   if (lastCard) focus(lastCard); else if (ZONES.catalog[0]) focus(ZONES.catalog[0]);
 }
 
@@ -1738,7 +1927,10 @@ function bindVideoEvents(video) {
   video.addEventListener('playing', () => qs('#player-spinner').classList.remove('visible'));
   video.addEventListener('canplay', () => qs('#player-spinner').classList.remove('visible'));
   video.addEventListener('play', () => { qs('#player-playpause-btn').textContent = '⏸'; });
-  video.addEventListener('pause', () => { qs('#player-playpause-btn').textContent = '▶'; });
+  video.addEventListener('pause', () => {
+    qs('#player-playpause-btn').textContent = '▶';
+    recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
+  });
   video.addEventListener('ended', () => {
     if (getNextEpisode(State.playerContext)) playNextEpisode(); else closePlayer();
   });
@@ -1751,6 +1943,13 @@ function updateProgress() {
   qs('#progress-bar').style.width = pct + '%';
   qs('#progress-thumb').style.left = pct + '%';
   qs('#player-time').textContent = `${fmtTime(video.currentTime)} / ${fmtTime(video.duration)}`;
+
+  // Guardar el progreso de "Seguir viendo", con un margen de ~5s reales entre guardados
+  const now = Date.now();
+  if (!State.lastProgressSaveAt || now - State.lastProgressSaveAt > 5000) {
+    State.lastProgressSaveAt = now;
+    recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
+  }
 }
 
 function updateVol() {
@@ -2104,9 +2303,10 @@ function navigateMain(key) {
         const target = prevRowCards[Math.min(idx, prevRowCards.length - 1)];
         focus(target);
       } else {
-        // scroll to top so hero is visible
-        qs('#main').scrollTo({ top: 0, behavior: 'smooth' });
+        // Enfocar primero (el navegador puede auto-scrollear al botón) y
+        // luego forzar el scroll a 0 para que el hero completo quede visible.
         focus(qs('#hero-play-btn'));
+        qs('#main').scrollTo({ top: 0, behavior: 'smooth' });
       }
     } else if (key === 'ArrowDown') {
       const allRows = [...qsa('.cards-row')];
