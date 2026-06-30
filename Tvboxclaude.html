@@ -844,6 +844,42 @@ async function fetchTMDBBackdrop(tmdbId, type) {
 // Categorías que son series/TV
 const TV_CATS = new Set(['series','anime']);
 
+// ========================
+// SELECCIÓN DIARIA (hero / top10)
+// ========================
+// Hash simple y determinístico de un string a un entero sin signo.
+function hashString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return h >>> 0;
+}
+
+// Misma fecha (año-mes-día) => mismo seed durante todo el día.
+function getDailySeed() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+// Puntaje pseudoaleatorio pero estable por título+día. No depende del orden
+// del catálogo ni de cuántos items haya, así que agregar/quitar títulos no
+// reordena los que ya estaban — y cambia solo cuando cambia el día.
+function dailyScore(title, salt) {
+  return hashString(getDailySeed() + '::' + (salt || '') + '::' + (title || ''));
+}
+
+// Elige hasta `count` items de TODO el catálogo (incluyendo lo que se vaya
+// agregando), de forma determinística para el día actual. `salt` permite que
+// dos secciones (ej. hero y top10) tengan sorteos independientes ese mismo día.
+function getDailyPicks(items, count, salt) {
+  return [...items]
+    .map(item => ({ item, score: dailyScore(item.t, salt) }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, count)
+    .map(x => x.item);
+}
+
 async function enrichItem(item) {
   const isTV = TV_CATS.has(item.c);
   const tmdb = await fetchTMDB(item.t, !isTV);
@@ -905,6 +941,24 @@ const DEMO_CATALOG = [
   // array "seasons". Cada temporada tiene "n" (número) y "episodes" (array de {t, h}).
   // En la card del catálogo solo aparece UNA vez "Stranger Things"; al abrirla, dentro de la
   // ficha aparecen los botones de temporada y, debajo, la lista de episodios de esa temporada.
+{
+  t: "Citadel Honey Bunny",
+  c: "series",
+  i: "https://image.tmdb.org/t/p/original/hf3mq5cfXTdKHiW3UkZwSxbkx1A.jpg",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: Episodio 1", h: "https://hugh.cdn.rumble.cloud/video/s8/2/7/D/b/F/7DbFu.aaa.mp4" },
+        { t: "Episodio 2: Episodio 2", h: "https://hugh.cdn.rumble.cloud/video/s8/2/x/M/b/F/xMbFu.aaa.mp4" },
+        { t: "Episodio 3: Episodio 3", h: "https://hugh.cdn.rumble.cloud/video/s8/2/5/U/k/F/5UkFu.aaa.mp4" },
+        { t: "Episodio 4: Episodio 4", h: "https://hugh.cdn.rumble.cloud/video/s8/2/T/a/l/F/TalFu.aaa.mp4" },
+        { t: "Episodio 5: Episodio 5", h: "https://1a-1791.com/video/s8/2/K/O/k/F/KOkFu.aaa.mp4" },
+        { t: "Episodio 6: Episodio 6", h: "https://1a-1791.com/video/s8/2/g/g/l/F/gglFu.aaa.mp4" }
+      ]
+    }
+  ]
+},
   {
     t: "Stranger Things",
     c: "series",
@@ -958,27 +1012,27 @@ const DEMO_CATALOG = [
   },
 
   // ====== EJEMPLO: ANIME con 3 temporadas, mismo patrón agrupado ======
-  {
-    t: "Elfen Lied",
-    c: "anime",
-    i: "https://image.tmdb.org/t/p/original/2ZOp6VojGj6pUUorbPbVLbxugOp.jpg",
-    seasons: [
-      {
-        n: 1,
-        episodes: [
-          { t: "Episodio 1", h: "https://player.zilla-networks.com/m3u8/4e17b54ccadff16c5761332ae31340ae" },
-          { t: "Episodio 2", h: "https://player.zilla-networks.com/m3u8/83135a588ed4424828c3a8b9d44131f5" },
-          { t: "Episodio 3", h: "https://player.zilla-networks.com/m3u8/f24a32f21c605a1c47e2af7898ceec6d" },
-          { t: "Episodio 4", h: "https://player.zilla-networks.com/m3u8/5e33491ede30028e2942ab8bb2988811" },
-          { t: "Episodio 5", h: "https://player.zilla-networks.com/m3u8/b20de4862b8456bc5768c758eec8c317" },
-          { t: "Episodio 6", h: "https://player.zilla-networks.com/m3u8/f28445b2f3beff1e6196ef744f1b6085" },
-          { t: "Episodio 7", h: "https://player.zilla-networks.com/m3u8/0c3aca87fd069645072547e9c5d8b8a8" },
-          { t: "Episodio 8", h: "https://player.zilla-networks.com/m3u8/448d754e74126616da5d10207c203787" },
-          { t: "Episodio 9", h: "https://player.zilla-networks.com/m3u8/40b80e09a7783b0f0c70601e7180afa3" },
-          { t: "Episodio 10", h: "https://player.zilla-networks.com/m3u8/94336633e74b78e3814028b711469c52" },
-          { t: "Episodio 11", h: "https://player.zilla-networks.com/m3u8/2a1f635e0f31188bf95a08633435ba1b" },
-          { t: "Episodio 12", h: "https://player.zilla-networks.com/m3u8/fd8cbebfa346e85234623fc4e1800be7" },
-          { t: "Episodio 12", h: "https://player.zilla-networks.com/m3u8/5b326f483a3afcc6b3b2a4191f63fe2c" }
+{
+  t: "Elfen Lied",
+  c: "anime",
+  i: "https://image.tmdb.org/t/p/original/lewWPFjUjXkJgXV9C8yzN35fiu1.jpg",
+  seasons: [
+    {
+      n: 1,
+      episodes: [
+        { t: "Episodio 1: El Encuentro", h: "https://player.zilla-networks.com/m3u8/4e17b54ccadff16c5761332ae31340ae" },
+        { t: "Episodio 2: Exterminio", h: "https://player.zilla-networks.com/m3u8/83135a588ed4424828c3a8b9d44131f5" },
+        { t: "Episodio 3: Dentro de su corazón", h: "https://player.zilla-networks.com/m3u8/f24a32f21c605a1c47e2af7898ceec6d" },
+        { t: "Episodio 4: Colisión", h: "https://player.zilla-networks.com/m3u8/5e33491ede30028e2942ab8bb2988811" },
+        { t: "Episodio 5: Recepción", h: "https://player.zilla-networks.com/m3u8/b20de4862b8456bc5768c758eec8c317" },
+        { t: "Episodio 6: Corazones ardientes", h: "https://player.zilla-networks.com/m3u8/f28445b2f3beff1e6196ef744f1b6085" },
+        { t: "Episodio 7: Confrontación", h: "https://player.zilla-networks.com/m3u8/0c3aca87fd069645072547e9c5d8b8a8" },
+        { t: "Episodio 8: El comienzo", h: "https://player.zilla-networks.com/m3u8/448d754e74126616da5d10207c203787" },
+        { t: "Episodio 9: Reminiscencia", h: "https://player.zilla-networks.com/m3u8/40b80e09a7783b0f0c70601e7180afa3" },
+        { t: "Episodio 10: Infante", h: "https://player.zilla-networks.com/m3u8/94336633e74b78e3814028b711469c52" },
+        { t: "Episodio 11: Confusión", h: "https://player.zilla-networks.com/m3u8/2a1f635e0f31188bf95a08633435ba1b" },
+        { t: "Episodio 12: Descenso", h: "https://player.zilla-networks.com/m3u8/fd8cbebfa346e85234623fc4e1800be7" },
+        { t: "Episodio 13: Iluminación", h: "https://player.zilla-networks.com/m3u8/5b326f483a3afcc6b3b2a4191f63fe2c" }
 
         ]
       }
@@ -1254,6 +1308,12 @@ const DEMO_CATALOG = [
   i: "https://image.tmdb.org/t/p/original/bYSenwevJ3e71W0aweIv0vhBrhS.jpg",
   h: "https://1a-1791.com/video/fwe2/f3/s8/2/m/Y/Y/4/mYY4z.aaa.mp4"
 },
+{
+  t: "Dragon Ball Z: La Fusión de Goku y Vegeta",
+  c: "anime",
+  i: "https://image.tmdb.org/t/p/original/9hAgxPgaPHLGg9NUEGld194Ek05.jpg",
+  h: "https://player.zilla-networks.com/m3u8/4e206d07be45216dfeb8e554aa378beb"
+},
 
 ];
 
@@ -1386,8 +1446,9 @@ function render() {
     State.filtered = State.catalog.filter(item => item.c === State.activeCategory);
   }
 
-  // Hero slideshow
-  initHeroSlideshow(State.filtered.length ? State.filtered : State.catalog);
+  // Hero slideshow: SIEMPRE de todo el catálogo, con selección diaria estable
+  const dailyHero = State.catalog.length ? getDailyPicks(State.catalog, 4, 'hero') : [];
+  initHeroSlideshow(dailyHero.length ? dailyHero : State.filtered);
 
   // Build sections
   cat.innerHTML = '';
@@ -1407,9 +1468,11 @@ function render() {
     buildSection(cat, 'Mi Lista', myListItems, 'mylist');
   }
 
-  // Top 10 (first 10 from filtered)
-  if (State.filtered.length >= 5) {
-    buildSection(cat, 'Top 10', State.filtered.slice(0, 10), 'top10');
+  // Top 10: SIEMPRE de todo el catálogo, con selección diaria estable (no
+  // se reordena si solo agregas títulos nuevos; cambia una vez al día)
+  if (State.catalog.length >= 5) {
+    const top10Pool = State.catalog.filter(item => !dailyHero.includes(item));
+    buildSection(cat, 'Top 10', getDailyPicks(top10Pool, 10, 'top10'), 'top10');
   }
 
   // Group by category
