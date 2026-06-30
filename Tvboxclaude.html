@@ -579,7 +579,14 @@ html, body {
   border-radius: 16px; padding: 36px; max-width: 700px; width: 90%;
   display: flex; gap: 28px;
 }
-#info-poster { width: 220px; flex-shrink: 0; border-radius: 10px; aspect-ratio: 16/9; object-fit: cover; background: var(--bg3); }
+#info-poster-wrap { width: 220px; flex-shrink: 0; border-radius: 10px; aspect-ratio: 16/9; overflow: hidden; position: relative; background: var(--bg3); }
+#info-poster { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg3); transition: opacity 300ms ease; }
+#info-poster.faded { opacity: 0; }
+#info-trailer {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+  opacity: 0; pointer-events: none; transition: opacity 400ms ease;
+}
+#info-trailer.visible { opacity: 1; }
 #info-content { flex: 1; }
 #info-title {
   font-family: 'Bebas Neue', sans-serif;
@@ -730,7 +737,10 @@ html, body {
 <!-- INFO OVERLAY -->
 <div id="info-overlay">
   <div id="info-box">
+  <div id="info-poster-wrap">
     <img id="info-poster" src="" alt="">
+    <iframe id="info-trailer" src="" allow="autoplay; encrypted-media" frameborder="0"></iframe>
+  </div>
     <div id="info-content">
       <div id="info-logo-wrap"></div>
       <div id="info-title"></div>
@@ -885,7 +895,30 @@ async function fetchTVDBLogo(title, type) {
   } catch(e) { IMG_CACHE[key] = null; return null; }
 }
 
-// Fondo del hero: SIEMPRE desde TMDB, sin texto (backdrops con include_image_language=null)
+// Trailer/teaser desde TMDB (YouTube). Se usa para la vista previa tipo Netflix en la ficha.
+async function fetchTMDBTrailer(tmdbId, type) {
+  const key = `tmdbtrailer_${tmdbId}_${type}`;
+  if (IMG_CACHE[key] !== undefined) return IMG_CACHE[key];
+  try {
+    let res = await fetch(`${TMDB_BASE}/${type}/${tmdbId}/videos?api_key=${TMDB_KEY}&language=es-MX`);
+    let data = await res.json();
+    let vids = (data.results || []).filter(v => v.site === 'YouTube');
+    if (!vids.length) {
+      res = await fetch(`${TMDB_BASE}/${type}/${tmdbId}/videos?api_key=${TMDB_KEY}&language=en-US`);
+      data = await res.json();
+      vids = (data.results || []).filter(v => v.site === 'YouTube');
+    }
+    const trailer = vids.find(v => v.type === 'Trailer' && v.official) ||
+                     vids.find(v => v.type === 'Trailer') ||
+                     vids.find(v => v.type === 'Teaser') ||
+                     vids[0];
+    const ykey = trailer ? trailer.key : null;
+    IMG_CACHE[key] = ykey;
+    return ykey;
+  } catch (e) { IMG_CACHE[key] = null; return null; }
+}
+
+
 async function fetchTMDBBackdrop(tmdbId, type) {
   const key = `tmdbbg_${tmdbId}_${type}`;
   if (IMG_CACHE[key] !== undefined) return IMG_CACHE[key];
@@ -944,7 +977,7 @@ function getDailyPicks(items, count, salt) {
 async function enrichItem(item) {
   const isTV = TV_CATS.has(item.c);
   const tmdb = await fetchTMDB(item.t, !isTV);
-  if (!tmdb) return { backdrop: item.i, poster: item.i, logo: null, overview: '' };
+  if (!tmdb) return { backdrop: item.i, poster: item.i, logo: null, overview: '', tmdb_id: null, tmdb_type: null };
   const textlessBg = await fetchTMDBBackdrop(tmdb.tmdb_id, tmdb.type);
   // Cadena de logos: TMDB -> Fanart -> TheTVDB. Se prueba en orden hasta encontrar uno.
   let logo = await fetchTMDBLogo(tmdb.tmdb_id, tmdb.type);
@@ -954,7 +987,9 @@ async function enrichItem(item) {
     backdrop: textlessBg || item.i,   // fondo sin texto desde TMDB, si no tu imagen manual
     poster: item.i,     // siempre tu imagen manual (para tarjetas del catálogo)
     logo,
-    overview: tmdb.overview
+    overview: tmdb.overview,
+    tmdb_id: tmdb.tmdb_id,
+    tmdb_type: tmdb.type
   };
 }
 
@@ -1823,7 +1858,30 @@ function showInfo(item) {
   // Imagen: usar backdrop enriquecido si existe, si no la imagen manual mientras carga
   const posterEl = qs('#info-poster');
   posterEl.src = item._backdrop || item.i || '';
-  posterEl.style.cssText = 'width:220px;flex-shrink:0;border-radius:10px;aspect-ratio:16/9;object-fit:cover;background:var(--bg3)';
+  posterEl.classList.remove('faded');
+
+  // Vista previa tipo Netflix: detener cualquier trailer anterior y resetear
+  const trailerEl = qs('#info-trailer');
+  trailerEl.classList.remove('visible');
+  trailerEl.src = '';
+  if (State._trailerTimer) { clearTimeout(State._trailerTimer); State._trailerTimer = null; }
+
+  // Si ya conocemos el tmdb_id de este item, intentar trailer ya mismo (con
+  // un pequeño retraso, como Netflix, para no disparar video en cada toque rápido)
+  const tryPlayTrailer = (tmdbId, tmdbType) => {
+    if (!tmdbId) return;
+    State._trailerTimer = setTimeout(async () => {
+      const ykey = await fetchTMDBTrailer(tmdbId, tmdbType);
+      // Solo reproducir si la ficha sigue abierta y mostrando el mismo item
+      if (ykey && State.infoVisible && State.infoItem === item) {
+        trailerEl.src = `https://www.youtube.com/embed/${ykey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ykey}&modestbranding=1&playsinline=1&rel=0`;
+        trailerEl.classList.add('visible');
+        posterEl.classList.add('faded');
+      }
+    }, 700);
+  };
+  if (item._tmdbId) tryPlayTrailer(item._tmdbId, item._tmdbType);
+
 
   // Logo o título
   const titleEl = qs('#info-title');
@@ -1853,10 +1911,13 @@ function showInfo(item) {
       item._backdrop = data.backdrop;
       item._logo = data.logo;
       item._overview = data.overview;
+      item._tmdbId = data.tmdb_id;
+      item._tmdbType = data.tmdb_type;
       // Solo actualizar si la ficha sigue mostrando el mismo item
       if (State.infoVisible && State.infoItem === item) {
         if (data.backdrop) posterEl.src = data.backdrop;
         if (synEl && data.overview) synEl.textContent = data.overview;
+        if (!trailerEl.classList.contains('visible')) tryPlayTrailer(data.tmdb_id, data.tmdb_type);
         if (data.logo) {
           titleEl.style.display = 'none';
           logoWrap.innerHTML = '';
@@ -1933,6 +1994,11 @@ function showInfo(item) {
 function closeInfo() {
   State.infoVisible = false;
   qs('#info-overlay').classList.remove('visible');
+  if (State._trailerTimer) { clearTimeout(State._trailerTimer); State._trailerTimer = null; }
+  const trailerEl = qs('#info-trailer');
+  trailerEl.classList.remove('visible');
+  trailerEl.src = '';
+  qs('#info-poster').classList.remove('faded');
   if (State.currentFocusEl) State.currentFocusEl.classList.remove('focused');
   // return focus to last card
   const lastCard = ZONES.catalog.find(c => c.dataset.title === (State.infoItem && State.infoItem.t));
@@ -2100,6 +2166,10 @@ function openPlayer(item, context) {
 
   qs('#info-overlay').classList.remove('visible');
   State.infoVisible = false;
+  if (State._trailerTimer) { clearTimeout(State._trailerTimer); State._trailerTimer = null; }
+  qs('#info-trailer').classList.remove('visible');
+  qs('#info-trailer').src = '';
+  qs('#info-poster').classList.remove('faded');
 
   resetIntroUI();
 
