@@ -1602,6 +1602,24 @@ function buildCard(item, type, idx) {
     img.style.display = 'none';
     wrap.style.background = '#1a1a24';
     fallback.style.display = 'block';
+    // Para "Seguir viendo": si el póster guardado falla o no existe, intentar
+    // recuperar un póster real desde TMDB en lugar de quedarnos solo con el texto.
+    if (item._isContinue && !item._triedEnrich) {
+      item._triedEnrich = true;
+      const srcTitle = item._entry.title;
+      const srcItem = State.catalog.find(c => c.t === srcTitle);
+      if (srcItem) {
+        enrichItem(srcItem).then(data => {
+          const newSrc = data.poster || data.backdrop;
+          if (newSrc) {
+            img.src = newSrc;
+            img.style.display = 'block';
+            wrap.style.background = '';
+            fallback.style.display = 'none';
+          }
+        }).catch(() => {});
+      }
+    }
   };
   img.onerror = showFallback;
   if (!item.i) showFallback();
