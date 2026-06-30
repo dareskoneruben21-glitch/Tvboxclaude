@@ -568,6 +568,28 @@ html, body {
 #toast.show { transform: translateY(0); opacity: 1; }
 
 /* ===== MODAL DETAIL (info) ===== */
+#trailer-preview-overlay {
+  display: none; position: fixed; inset: 0; z-index: 260; background: #000;
+}
+#trailer-preview-overlay.visible { display: block; }
+#trailer-preview-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+#trailer-preview-info {
+  position: absolute; left: 36px; bottom: 36px; z-index: 2;
+  max-width: 60%; pointer-events: none;
+}
+#trailer-preview-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 2px;
+  color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+}
+#trailer-preview-btns {
+  position: absolute; right: 36px; bottom: 36px; z-index: 2;
+  display: flex; gap: 10px;
+}
+#trailer-preview-overlay::before {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 35%);
+  pointer-events: none;
+}
 #info-overlay {
   display: none; position: fixed; inset: 0; z-index: 200;
   background: rgba(10,10,15,0.85); backdrop-filter: blur(8px);
@@ -628,6 +650,16 @@ html, body {
 </style>
 </head>
 <body>
+<div id="trailer-preview-overlay">
+  <iframe id="trailer-preview-frame" src="" allow="autoplay; encrypted-media" frameborder="0"></iframe>
+  <div id="trailer-preview-info">
+    <div id="trailer-preview-title"></div>
+  </div>
+  <div id="trailer-preview-btns">
+    <button id="trailer-preview-play-btn" class="info-btn primary" tabindex="0">▶ Reproducir</button>
+    <button id="trailer-preview-close-btn" class="info-btn secondary" tabindex="0">✕ Cerrar</button>
+  </div>
+</div>
 
 <!-- HEADER -->
 <div id="header">
@@ -1010,6 +1042,11 @@ const State = {
   playerVisible: false,
   searchVisible: false,
   infoVisible: false,
+  previewVisible: false,
+  _previewCard: null,
+  _previewItem: null,
+  _cardPreviewTimer: null,
+  _suppressPreviewOnce: false,
   controlsTimer: null,
   searchQuery: '',
   searchDebounceTimer: null,
@@ -1033,6 +1070,7 @@ const ZONES = {
   player: [],
   search: [],
   info: [],
+  preview: [],
 };
 
 // ========================
@@ -1744,6 +1782,7 @@ function buildCard(item, type, idx) {
   card.dataset.url = item.h || '';
   card.dataset.img = item.i || '';
   card.dataset.cat = item.c || '';
+  card._item = item;
 
   if (type === 'top10' && idx < 10) {
     const num = el('div', 'top10-num');
@@ -1805,6 +1844,8 @@ function buildCard(item, type, idx) {
   wrap.appendChild(logoImg);
   wrap.appendChild(fallback);
   wrap.appendChild(overlay);
+  card._wrap = wrap;
+  card._posterImg = img;
 
   if (item._isContinue) {
     const entry = item._entry;
@@ -1841,6 +1882,7 @@ function buildCard(item, type, idx) {
 
   // On activate: reanudar directamente si es de "Seguir viendo", si no mostrar info
   card.addEventListener('activate', () => {
+    clearPendingPreviewTimer();
     if (item._isContinue) resumeContinueItem(item._entry);
     else showInfo(item);
   });
@@ -2470,10 +2512,66 @@ function filterSearch() {
 }
 
 // ========================
+// VISTA PREVIA EN PANTALLA COMPLETA (sin entrar a la ficha) - tipo Netflix
+// ========================
+function clearPendingPreviewTimer() {
+  if (State._cardPreviewTimer) { clearTimeout(State._cardPreviewTimer); State._cardPreviewTimer = null; }
+}
+
+function scheduleCardPreview(card) {
+  if (!card || !card._item) return;
+  if (State._suppressPreviewOnce) { State._suppressPreviewOnce = false; return; }
+  const item = card._item;
+  State._cardPreviewTimer = setTimeout(async () => {
+    let tmdbId = item._tmdbId, tmdbType = item._tmdbType;
+    if (!tmdbId) {
+      const isTV = TV_CATS.has(item.c);
+      const tmdb = await fetchTMDB(item.t, !isTV);
+      if (tmdb) { tmdbId = tmdb.tmdb_id; tmdbType = tmdb.type; item._tmdbId = tmdbId; item._tmdbType = tmdbType; }
+    }
+    if (!tmdbId || State.currentFocusEl !== card) return;
+    const ykey = await fetchTMDBTrailer(tmdbId, tmdbType);
+    if (!ykey || State.currentFocusEl !== card) return;
+    openCardPreview(card, item, ykey);
+  }, 900);
+}
+
+function openCardPreview(card, item, ykey) {
+  State.previewVisible = true;
+  State._previewCard = card;
+  State._previewItem = item;
+  const overlay = qs('#trailer-preview-overlay');
+  const frame = qs('#trailer-preview-frame');
+  // mute=0: se intenta con sonido (el remoto ya generó interacción del usuario).
+  // Si el WebView lo bloquea, el video igual se ve, solo sin audio.
+  frame.src = `https://www.youtube.com/embed/${ykey}?autoplay=1&mute=0&controls=0&loop=1&playlist=${ykey}&modestbranding=1&playsinline=1&rel=0`;
+  qs('#trailer-preview-title').textContent = item.t || '';
+  overlay.classList.add('visible');
+  ZONES.preview = [qs('#trailer-preview-play-btn'), qs('#trailer-preview-close-btn')];
+  focus(qs('#trailer-preview-play-btn'));
+}
+
+function closeCardPreview(returnFocus) {
+  State.previewVisible = false;
+  const overlay = qs('#trailer-preview-overlay');
+  const frame = qs('#trailer-preview-frame');
+  overlay.classList.remove('visible');
+  frame.src = '';
+  const card = State._previewCard;
+  State._previewCard = null;
+  State._previewItem = null;
+  if (returnFocus && card) {
+    State._suppressPreviewOnce = true;
+    focus(card);
+  }
+}
+
+// ========================
 // FOCUS ENGINE
 // ========================
 function focus(el) {
   if (!el) return;
+  clearPendingPreviewTimer();
   if (State.currentFocusEl) {
     State.currentFocusEl.classList.remove('focused');
   }
@@ -2484,6 +2582,7 @@ function focus(el) {
   // pulsación se siente como traba/demora al bajar de tarjeta en tarjeta.
   if (el.closest('.cards-row')) {
     el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+    if (el.classList.contains('card')) scheduleCardPreview(el);
   }
   if (el.closest('#keyboard')) {
     el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
@@ -2582,6 +2681,20 @@ function bindGlobal() {
   });
   qs('#info-close-btn').addEventListener('activate', closeInfo);
 
+  qs('#trailer-preview-play-btn').addEventListener('activate', () => {
+    const item = State._previewItem;
+    closeCardPreview(false);
+    if (item) {
+      if (item.seasons && item.seasons.length) {
+        const firstEp = item.seasons[0].episodes[0];
+        if (firstEp) openPlayer({ t: `${item.t} - ${firstEp.t}`, h: firstEp.h, c: item.c }, { parentItem: item, seasonIndex: 0, episodeIndex: 0 });
+      } else {
+        openPlayer(item);
+      }
+    }
+  });
+  qs('#trailer-preview-close-btn').addEventListener('activate', () => closeCardPreview(true));
+
   // Also add click listeners for mouse support
   document.querySelectorAll('[tabindex]').forEach(el => {
     el.addEventListener('click', () => el.dispatchEvent(new Event('activate')));
@@ -2615,6 +2728,15 @@ function onKey(e) {
       navigateSearch(key); return;
     }
     // typing passthrough to keyboard widget
+    return;
+  }
+
+  // Vista previa en pantalla completa (al pararse sobre una card)
+  if (State.previewVisible) {
+    if (key === 'Backspace' || key === 'Escape') { e.preventDefault(); closeCardPreview(true); return; }
+    if (key === 'Enter') { e.preventDefault(); activate(); return; }
+    if (key === 'ArrowLeft' || key === 'ArrowRight') { e.preventDefault(); navigateLinear(ZONES.preview, key); return; }
+    if (key === 'ArrowUp' || key === 'ArrowDown') { e.preventDefault(); return; }
     return;
   }
 
