@@ -876,6 +876,21 @@ const TMDB_KEY  = 'b6083b855479a79fd9acdb0a2789f126';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_ORIG = 'https://image.tmdb.org/t/p/original';
 const TMDB_W780 = 'https://image.tmdb.org/t/p/w780';
+
+// Las tarjetas del catálogo miden 260px de ancho, pero muchas URLs guardadas
+// en el catálogo apuntan a la resolución "original" de TMDB (varios MB cada
+// una). Descargar y decodificar esas imágenes a resolución completa solo
+// para un thumbnail chico era la causa principal de la lentitud general
+// (CPU/GPU del TV box saturada) incluyendo el delay al navegar. Esta función
+// solo se usa para el <img> de la tarjeta; no toca el dato original (item.i),
+// que se sigue usando igual en el resto del código (hero, ficha, etc).
+function tmdbThumb(url) {
+  if (!url) return url;
+  if (url.includes('image.tmdb.org/t/p/original')) {
+    return url.replace('/t/p/original', '/t/p/w500');
+  }
+  return url;
+}
 const FANART_KEY = '5abac006eff9be3de8ed424807622cfd';
 const FANART_BASE = 'https://webservice.fanart.tv/v3';
 const TVDB_KEY = 'f04254a7-d67c-46f8-b072-327b78f1c546';
@@ -2348,7 +2363,7 @@ function buildCard(item, type, idx) {
 
   const img = document.createElement('img');
   img.className = 'card-poster';
-  img.src = item.i || '';
+  img.src = tmdbThumb(item.i) || '';
   img.alt = item.t;
   img.loading = 'lazy';
 
@@ -2369,7 +2384,7 @@ function buildCard(item, type, idx) {
       const srcItem = State.catalog.find(c => c.t === srcTitle);
       if (srcItem) {
         enrichItem(srcItem).then(data => {
-          const newSrc = data.poster || data.backdrop;
+          const newSrc = tmdbThumb(data.poster || data.backdrop);
           if (newSrc) {
             img.src = newSrc;
             img.style.display = 'block';
