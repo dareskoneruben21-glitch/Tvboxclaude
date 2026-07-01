@@ -497,6 +497,59 @@ html, body {
   transform: translateY(-50%);
 }
 
+/* ===== NEXT UP / RECOMENDACIÓN AL TERMINAR ===== */
+#nextup-panel {
+  position: absolute; left: 32px; bottom: 96px; z-index: 25;
+  display: none;
+}
+#nextup-panel.visible { display: block; animation: nextupIn 0.35s ease; }
+@keyframes nextupIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#nextup-dismiss-btn {
+  display: block; margin: 0 0 8px auto;
+  width: 34px; height: 34px; font-size: 0.85rem;
+}
+#nextup-card {
+  display: flex; align-items: flex-end; gap: 14px;
+  background: rgba(10,10,14,0.72); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+  padding: 14px; max-width: 420px;
+}
+#nextup-poster-wrap {
+  position: relative; width: 104px; height: 146px; flex-shrink: 0;
+  border-radius: 8px; overflow: hidden; cursor: pointer; outline: none;
+  background: #111;
+}
+#nextup-poster-wrap:focus, #nextup-poster-wrap.focused {
+  box-shadow: 0 0 0 3px var(--gold);
+}
+#nextup-poster { width: 100%; height: 100%; object-fit: cover; display: block; }
+#nextup-play-btn {
+  position: absolute; top: 50%; left: 50%; width: 56px; height: 56px;
+  transform: translate(-50%,-50%);
+}
+#nextup-ring { position: absolute; inset: 0; width: 56px; height: 56px; transform: rotate(-90deg); }
+.nextup-ring-bg { fill: none; stroke: rgba(255,255,255,0.3); stroke-width: 3; }
+.nextup-ring-fg { fill: none; stroke: #c9a84c; stroke-width: 3; stroke-linecap: round; }
+#nextup-play-icon {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.7); pointer-events: none;
+}
+#nextup-info { display: flex; flex-direction: column; gap: 6px; padding-bottom: 4px; min-width: 0; }
+#nextup-label {
+  font-size: 0.7rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-dim);
+}
+#nextup-title {
+  font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#nextup-meta { display: flex; gap: 8px; align-items: center; }
+#nextup-details-btn {
+  align-self: flex-start; margin-top: 4px; padding: 7px 16px; font-size: 0.78rem; border-radius: 6px;
+}
+
 .ctrl-hint {
   font-size: 0.72rem; color: var(--text-dim);
   display: flex; gap: 14px; margin-left: 12px;
@@ -723,6 +776,31 @@ html, body {
         <button class="player-btn" id="player-forward-btn" tabindex="0" title="Adelantar 10s">⏩</button>
         <button class="player-btn" id="player-next-btn" tabindex="0" title="Siguiente capítulo">Siguiente ⏭</button>
         <button class="player-btn" id="player-fullscreen-btn" tabindex="0" title="Pantalla completa">⛶</button>
+      </div>
+    </div>
+
+    <div id="nextup-panel">
+      <button class="player-btn" id="nextup-dismiss-btn" tabindex="0" title="Cerrar sugerencia">﹀</button>
+      <div id="nextup-card">
+        <div id="nextup-poster-wrap" tabindex="0" title="Reproducir ahora">
+          <img id="nextup-poster" alt="">
+          <div id="nextup-play-btn">
+            <svg id="nextup-ring" viewBox="0 0 56 56">
+              <circle class="nextup-ring-bg" cx="28" cy="28" r="24"></circle>
+              <circle class="nextup-ring-fg" id="nextup-ring-fg" cx="28" cy="28" r="24"></circle>
+            </svg>
+            <div id="nextup-play-icon">▶</div>
+          </div>
+        </div>
+        <div id="nextup-info">
+          <div id="nextup-label">También te podría gustar</div>
+          <div id="nextup-title"></div>
+          <div id="nextup-meta">
+            <span class="rating-badge" id="nextup-rating"></span>
+            <span class="cat-badge" id="nextup-cat"></span>
+          </div>
+          <button class="player-btn" id="nextup-details-btn" tabindex="0">Detalles</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1005,6 +1083,10 @@ const State = {
   introBtnVisible: false,
   introUrl: null,
   playerEntryScrollTop: 0,
+  // --- Recomendación "También te podría gustar" al terminar ---
+  nextUpItem: null,
+  nextUpVisible: false,
+  nextUpTimer: null,
 };
 
 // Focus navigation groups (ordered for spatial navigation)
@@ -2466,6 +2548,83 @@ function applyResume(video, url) {
   else video.addEventListener('loadedmetadata', trySeek, { once: true });
 }
 
+function getRecommendation(current) {
+  if (!State.catalog || !State.catalog.length) return null;
+  const curTitle = current && current.t;
+  const parentTitle = (current && current.t && current.t.includes(' - ')) ? current.t.split(' - ')[0] : curTitle;
+  const pool = State.catalog.filter(it => it.t !== curTitle && it.t !== parentTitle);
+  if (!pool.length) return null;
+  const curCat = (current && current.c) || '';
+  const sameCat = pool.filter(it => it.c === curCat);
+  const source = sameCat.length ? sameCat : pool;
+  return source[Math.floor(Math.random() * source.length)];
+}
+
+const NEXTUP_SECONDS = 10;
+const NEXTUP_RING_CIRC = 2 * Math.PI * 24;
+
+function showNextUp(rec) {
+  State.nextUpItem = rec;
+  State.nextUpVisible = true;
+
+  qs('#nextup-poster').src = rec.i || '';
+  qs('#nextup-title').textContent = rec.t || '';
+  qs('#nextup-rating').textContent = getRating(rec);
+  qs('#nextup-cat').textContent = (rec.c || '').toUpperCase();
+
+  const ring = qs('#nextup-ring-fg');
+  ring.style.strokeDasharray = NEXTUP_RING_CIRC;
+  ring.style.transition = 'none';
+  ring.style.strokeDashoffset = '0';
+  // Forzar reflow para que la transición posterior sí se anime desde 0
+  ring.getBoundingClientRect();
+  ring.style.transition = `stroke-dashoffset ${NEXTUP_SECONDS}s linear`;
+  ring.style.strokeDashoffset = String(NEXTUP_RING_CIRC);
+
+  qs('#nextup-panel').classList.add('visible');
+
+  const posterBtn = qs('#nextup-poster-wrap');
+  const detailsBtn = qs('#nextup-details-btn');
+  const dismissBtn = qs('#nextup-dismiss-btn');
+  [posterBtn, detailsBtn, dismissBtn].forEach(b => {
+    if (!ZONES.player.includes(b)) ZONES.player.push(b);
+  });
+  focus(posterBtn);
+
+  clearTimeout(State.nextUpTimer);
+  State.nextUpTimer = setTimeout(playRecommendedNow, NEXTUP_SECONDS * 1000);
+}
+
+function hideNextUp() {
+  clearTimeout(State.nextUpTimer);
+  State.nextUpTimer = null;
+  State.nextUpVisible = false;
+  qs('#nextup-panel').classList.remove('visible');
+  const ring = qs('#nextup-ring-fg');
+  ring.style.transition = 'none';
+  ring.style.strokeDashoffset = '0';
+  [qs('#nextup-poster-wrap'), qs('#nextup-details-btn'), qs('#nextup-dismiss-btn')].forEach(b => {
+    const idx = ZONES.player.indexOf(b);
+    if (idx !== -1) ZONES.player.splice(idx, 1);
+  });
+}
+
+function playRecommendedNow() {
+  const rec = State.nextUpItem;
+  hideNextUp();
+  if (!rec) { closePlayer(); return; }
+  if (rec.seasons && rec.seasons.length) {
+    const firstEp = rec.seasons[0].episodes[0];
+    if (firstEp) {
+      openPlayer({ t: `${rec.t} - ${firstEp.t}`, h: firstEp.h, c: rec.c }, { parentItem: rec, seasonIndex: 0, episodeIndex: 0 });
+    } else {
+      closePlayer();
+    }
+  } else {
+    openPlayer(rec);
+  }
+}
+
 function getNextEpisode(context) {
   if (!context || !context.parentItem || !context.parentItem.seasons) return null;
   const seasons = context.parentItem.seasons;
@@ -2604,6 +2763,7 @@ function openPlayer(item, context) {
   State.playerItem = item;
   State.playerContext = context || null;
   State.playerVisible = true;
+  hideNextUp();
   const url = item.h || '';
   const overlay = qs('#player-overlay');
   overlay.classList.add('visible');
@@ -2706,6 +2866,7 @@ function openPlayer(item, context) {
 
 function closePlayer() {
   State.playerVisible = false;
+  hideNextUp();
   resetIntroUI();
   const video = qs('#player-video');
   // Guardar la posición exacta antes de limpiar el video
@@ -2745,7 +2906,9 @@ function bindVideoEvents(video) {
     recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
   });
   video.addEventListener('ended', () => {
-    if (getNextEpisode(State.playerContext)) playNextEpisode(); else closePlayer();
+    if (getNextEpisode(State.playerContext)) { playNextEpisode(); return; }
+    const rec = getRecommendation(State.playerItem);
+    if (rec) showNextUp(rec); else closePlayer();
   });
 }
 
@@ -3004,6 +3167,14 @@ function bindGlobal() {
     showControls();
   });
   qs('#player-skip-intro-btn').addEventListener('activate', skipIntro);
+  qs('#nextup-poster-wrap').addEventListener('activate', playRecommendedNow);
+  qs('#nextup-details-btn').addEventListener('activate', () => {
+    const rec = State.nextUpItem;
+    hideNextUp();
+    closePlayer();
+    if (rec) showInfo(rec);
+  });
+  qs('#nextup-dismiss-btn').addEventListener('activate', hideNextUp);
   qs('#player-fullscreen-btn').addEventListener('activate', () => {
     const wrap = qs('#player-video-wrap');
     if (!document.fullscreenElement) {
