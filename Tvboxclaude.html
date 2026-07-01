@@ -550,6 +550,21 @@ html, body {
   align-self: flex-start; margin-top: 4px; padding: 7px 16px; font-size: 0.78rem; border-radius: 6px;
 }
 
+#player-audio-btn {
+  width: auto; min-width: 64px; padding: 0 16px; border-radius: 20px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.24), rgba(201,168,76,0.06));
+  border: 1px solid rgba(201,168,76,0.55); color: #f0d896;
+  font-weight: 800; font-size: 0.78rem; letter-spacing: 0.5px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+#player-audio-btn::before { content: '🌐'; font-size: 0.82rem; }
+#player-audio-btn:hover,
+#player-audio-btn:focus,
+#player-audio-btn.focused {
+  background: var(--gold-grad); color: #000;
+  box-shadow: 0 0 14px rgba(201,168,76,0.6);
+}
+
 .ctrl-hint {
   font-size: 0.72rem; color: var(--text-dim);
   display: flex; gap: 14px; margin-left: 12px;
@@ -746,6 +761,7 @@ html, body {
 <div id="player-overlay">
   <div id="player-video-wrap">
     <video id="player-video" preload="metadata"></video>
+    <audio id="player-audio2" preload="auto" style="display:none"></audio>
     <iframe id="player-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
     <div id="player-spinner"></div>
     <button class="player-btn" id="player-skip-intro-btn" tabindex="0" title="Saltar intro">Saltar intro ⏭</button>
@@ -770,6 +786,7 @@ html, body {
           <div id="player-vol-track"><div id="player-vol-fill"></div></div>
           <div id="player-vol">100%</div>
         </div>
+        <button class="player-btn" id="player-audio-btn" tabindex="0" title="Audio: Español" style="display:none">ES</button>
         <div id="player-time">0:00 / 0:00</div>
         <button class="player-btn" id="player-rewind-btn" tabindex="0" title="Retroceder 10s">⏪</button>
         <button class="player-btn" id="player-playpause-btn" tabindex="0" title="Reproducir / Pausa">⏸</button>
@@ -1088,6 +1105,10 @@ const State = {
   nextUpVisible: false,
   nextUpTimer: null,
   playerEndHandled: false,
+  // --- Doble audio (ES/EN) mediante pista "fantasma" ---
+  dualAudioUrl: null,
+  dualAudioMode: 'es',
+  _preDualMuted: false,
 };
 
 // Focus navigation groups (ordered for spatial navigation)
@@ -1961,6 +1982,7 @@ function init() {
   buildKeyboard();
   render();
   bindGlobal();
+  bindDualAudioSync();
   // initial focus
   setTimeout(() => focus(qs('.cat-btn')), 100);
 }
@@ -2562,6 +2584,7 @@ function getRecommendation(current) {
 }
 
 const NEXTUP_SECONDS = 10;
+const NEXTUP_TRIGGER_SECONDS = 120;
 const NEXTUP_RING_CIRC = 2 * Math.PI * 24;
 
 function showNextUp(rec) {
@@ -2624,6 +2647,108 @@ function playRecommendedNow() {
   } else {
     openPlayer(rec);
   }
+}
+
+// ========================
+// DOBLE AUDIO (ES/EN)
+// ========================
+// Estrategia "audio fantasma": el video principal siempre trae el audio en
+// español embebido. Si el item define "a2" (URL de un audio-only en inglés),
+// se carga en un <audio> oculto que se mantiene sincronizado en tiempo con
+// el <video>. Solo UNA de las dos pistas suena a la vez (se silencia la otra
+// por completo) para evitar el eco/doble audio.
+function getActiveAudioEl() {
+  const video = qs('#player-video');
+  if (State.dualAudioUrl && State.dualAudioMode === 'en') return qs('#player-audio2');
+  return video;
+}
+
+function setupDualAudio(item) {
+  const btn = qs('#player-audio-btn');
+  const audio2 = qs('#player-audio2');
+  audio2.pause();
+  audio2.removeAttribute('src');
+  try { audio2.load(); } catch (e) {}
+  State.dualAudioMode = 'es';
+  State.dualAudioUrl = (item && item.a2) ? item.a2 : null;
+
+  if (!State.dualAudioUrl) {
+    btn.style.display = 'none';
+    return;
+  }
+  audio2.src = State.dualAudioUrl;
+  audio2.muted = true;
+  try { audio2.load(); } catch (e) {}
+  btn.style.display = '';
+  btn.textContent = 'ES';
+  btn.title = 'Audio: Español (toca para cambiar a Inglés)';
+}
+
+function resetDualAudio() {
+  const audio2 = qs('#player-audio2');
+  audio2.pause();
+  State.dualAudioUrl = null;
+  State.dualAudioMode = 'es';
+  qs('#player-audio-btn').style.display = 'none';
+}
+
+function toggleDualAudio() {
+  if (!State.dualAudioUrl) return;
+  const video = qs('#player-video');
+  const audio2 = qs('#player-audio2');
+  const btn = qs('#player-audio-btn');
+
+  if (State.dualAudioMode === 'es') {
+    State._preDualMuted = video.muted;
+    State.dualAudioMode = 'en';
+    audio2.currentTime = video.currentTime;
+    audio2.volume = video.volume;
+    audio2.muted = State._preDualMuted;
+    if (!video.paused) audio2.play().catch(() => {});
+    video.muted = true;
+    btn.textContent = 'EN';
+    btn.title = 'Audio: Inglés (toca para cambiar a Español)';
+  } else {
+    State.dualAudioMode = 'es';
+    audio2.pause();
+    audio2.muted = true;
+    video.muted = !!State._preDualMuted;
+    btn.textContent = 'ES';
+    btn.title = 'Audio: Español (toca para cambiar a Inglés)';
+  }
+  updateVol();
+  showControls();
+}
+
+// Se enlaza UNA sola vez (el <video> y el <audio> fantasma son elementos
+// fijos que se reutilizan en cada reproducción, así que no hace falta
+// re-registrar estos listeners cada vez que se abre un nuevo item).
+function bindDualAudioSync() {
+  const video = qs('#player-video');
+  const audio2 = qs('#player-audio2');
+
+  video.addEventListener('play', () => {
+    if (State.dualAudioUrl && State.dualAudioMode === 'en') {
+      audio2.currentTime = video.currentTime;
+      audio2.play().catch(() => {});
+    }
+  });
+  video.addEventListener('pause', () => {
+    if (State.dualAudioUrl) audio2.pause();
+  });
+  video.addEventListener('seeking', () => {
+    if (State.dualAudioUrl && State.dualAudioMode === 'en') {
+      audio2.currentTime = video.currentTime;
+    }
+  });
+  video.addEventListener('timeupdate', () => {
+    if (State.dualAudioUrl && State.dualAudioMode === 'en' && !audio2.seeking) {
+      if (Math.abs(audio2.currentTime - video.currentTime) > 0.35) {
+        audio2.currentTime = video.currentTime;
+      }
+    }
+  });
+  audio2.addEventListener('volumechange', updateVol);
 }
 
 function getNextEpisode(context) {
@@ -2790,6 +2915,7 @@ function openPlayer(item, context) {
   const isM3U8 = /\.m3u8(\?|$)/i.test(url) || /\/m3u8\//i.test(url);
 
   if (isMP4 || isM3U8) {
+    setupDualAudio(item);
     iframe.style.display = 'none';
     video.style.display = 'block';
     spinner.classList.add('visible');
@@ -2834,7 +2960,9 @@ function openPlayer(item, context) {
     State.lastProgressSaveAt = 0;
     bindVideoEvents(video);
   } else {
-    // iframe
+    // iframe: la función de doble audio no aplica (no hay control sobre el
+    // reproductor externo), así que se desactiva por seguridad.
+    resetDualAudio();
     video.style.display = 'none';
     video.src = '';
     spinner.classList.remove('visible');
@@ -2849,6 +2977,7 @@ function openPlayer(item, context) {
   ZONES.player = [
     qs('#player-close-btn'),
     qs('#player-mute-btn'),
+    ...(State.dualAudioUrl ? [qs('#player-audio-btn')] : []),
     qs('#player-rewind-btn'),
     qs('#player-playpause-btn'),
     qs('#player-forward-btn'),
@@ -2869,6 +2998,7 @@ function openPlayer(item, context) {
 function closePlayer() {
   State.playerVisible = false;
   hideNextUp();
+  resetDualAudio();
   resetIntroUI();
   const video = qs('#player-video');
   // Guardar la posición exacta antes de limpiar el video
@@ -2926,11 +3056,17 @@ function updateProgress() {
   qs('#progress-thumb').style.left = pct + '%';
   qs('#player-time').textContent = `${fmtTime(video.currentTime)} / ${fmtTime(video.duration)}`;
 
-  // Respaldo: algunos streams (m3u8/mp4 de ciertos proveedores) no disparan
-  // 'ended' de forma confiable aunque el video ya haya llegado al final.
-  // Si el tiempo restante es menor a 1 segundo, forzamos el mismo flujo.
-  if (isFinite(video.duration) && video.duration - video.currentTime < 1) {
-    handleVideoEnd();
+  // Disparador de "También te podría gustar": se activa ~2 minutos antes del
+  // final (en vez de esperar al último segundo), igual que Netflix muestra
+  // el aviso de "Siguiente" durante los créditos. En videos cortos (menos de
+  // ~4 min) se usa un margen proporcional para no dispararlo casi al inicio.
+  if (isFinite(video.duration) && video.duration > 0) {
+    const margin = video.duration > NEXTUP_TRIGGER_SECONDS * 2
+      ? NEXTUP_TRIGGER_SECONDS
+      : video.duration * 0.15;
+    if (video.duration - video.currentTime <= margin) {
+      handleVideoEnd();
+    }
   }
 
   // Guardar el progreso de "Seguir viendo", con un margen de ~5s reales entre guardados
@@ -2942,11 +3078,11 @@ function updateProgress() {
 }
 
 function updateVol() {
-  const video = qs('#player-video');
-  const pct = Math.round(video.volume * 100);
+  const el = getActiveAudioEl();
+  const pct = Math.round(el.volume * 100);
   qs('#player-vol').textContent = `${pct}%`;
   qs('#player-vol-fill').style.width = pct + '%';
-  const muted = video.muted || video.volume === 0;
+  const muted = el.muted || el.volume === 0;
   qs('#player-mute-btn').textContent = muted ? '🔇' : '🔊';
 }
 
@@ -3171,10 +3307,12 @@ function bindGlobal() {
     showControls();
   });
   qs('#player-mute-btn').addEventListener('activate', () => {
-    const video = qs('#player-video');
-    video.muted = !video.muted;
+    const el = getActiveAudioEl();
+    el.muted = !el.muted;
+    updateVol();
     showControls();
   });
+  qs('#player-audio-btn').addEventListener('activate', toggleDualAudio);
   qs('#player-next-btn').addEventListener('activate', () => {
     playNextEpisode();
     showControls();
@@ -3230,8 +3368,8 @@ function onKey(e) {
     if (key === 'Enter' || key === ' ') { e.preventDefault(); activate(); return; }
     if (key === 'ArrowLeft' || key === 'ArrowRight') { e.preventDefault(); navigateLinear(ZONES.player, key); return; }
     if (!isVideo) return; // iframe: sin atajos extra de video
-    if (key === 'ArrowUp') { e.preventDefault(); video.volume = Math.min(video.volume + 0.1, 1); video.muted = false; return; }
-    if (key === 'ArrowDown') { e.preventDefault(); video.volume = Math.max(video.volume - 0.1, 0); return; }
+    if (key === 'ArrowUp') { e.preventDefault(); const el = getActiveAudioEl(); el.volume = Math.min(el.volume + 0.1, 1); el.muted = false; updateVol(); return; }
+    if (key === 'ArrowDown') { e.preventDefault(); const el = getActiveAudioEl(); el.volume = Math.max(el.volume - 0.1, 0); updateVol(); return; }
     return;
   }
 
