@@ -1087,6 +1087,7 @@ const State = {
   nextUpItem: null,
   nextUpVisible: false,
   nextUpTimer: null,
+  playerEndHandled: false,
 };
 
 // Focus navigation groups (ordered for spatial navigation)
@@ -2763,6 +2764,7 @@ function openPlayer(item, context) {
   State.playerItem = item;
   State.playerContext = context || null;
   State.playerVisible = true;
+  State.playerEndHandled = false;
   hideNextUp();
   const url = item.h || '';
   const overlay = qs('#player-overlay');
@@ -2894,6 +2896,14 @@ function closePlayer() {
   requestAnimationFrame(() => { main.scrollTop = State.playerEntryScrollTop || 0; });
 }
 
+function handleVideoEnd() {
+  if (State.playerEndHandled) return;
+  State.playerEndHandled = true;
+  if (getNextEpisode(State.playerContext)) { playNextEpisode(); return; }
+  const rec = getRecommendation(State.playerItem);
+  if (rec) showNextUp(rec); else closePlayer();
+}
+
 function bindVideoEvents(video) {
   video.addEventListener('timeupdate', updateProgress);
   video.addEventListener('volumechange', updateVol);
@@ -2905,11 +2915,7 @@ function bindVideoEvents(video) {
     qs('#player-playpause-btn').textContent = '▶';
     recordProgress(State.playerItem, State.playerContext, video.currentTime, video.duration);
   });
-  video.addEventListener('ended', () => {
-    if (getNextEpisode(State.playerContext)) { playNextEpisode(); return; }
-    const rec = getRecommendation(State.playerItem);
-    if (rec) showNextUp(rec); else closePlayer();
-  });
+  video.addEventListener('ended', handleVideoEnd);
 }
 
 function updateProgress() {
@@ -2919,6 +2925,13 @@ function updateProgress() {
   qs('#progress-bar').style.width = pct + '%';
   qs('#progress-thumb').style.left = pct + '%';
   qs('#player-time').textContent = `${fmtTime(video.currentTime)} / ${fmtTime(video.duration)}`;
+
+  // Respaldo: algunos streams (m3u8/mp4 de ciertos proveedores) no disparan
+  // 'ended' de forma confiable aunque el video ya haya llegado al final.
+  // Si el tiempo restante es menor a 1 segundo, forzamos el mismo flujo.
+  if (isFinite(video.duration) && video.duration - video.currentTime < 1) {
+    handleVideoEnd();
+  }
 
   // Guardar el progreso de "Seguir viendo", con un margen de ~5s reales entre guardados
   const now = Date.now();
