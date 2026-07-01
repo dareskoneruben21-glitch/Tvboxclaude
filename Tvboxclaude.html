@@ -208,7 +208,7 @@ html, body {
   display: flex; gap: 14px;
   padding: 8px 48px 16px;
   overflow-x: auto; overflow-y: visible;
-  scroll-behavior: smooth; scrollbar-width: none;
+  scroll-behavior: auto; scrollbar-width: none;
 }
 .cards-row::-webkit-scrollbar { display: none; }
 
@@ -218,11 +218,14 @@ html, body {
   width: 260px;
   border-radius: 10px; overflow: visible;
   cursor: pointer; outline: none !important;
-  transition: transform var(--trans), box-shadow var(--trans), filter var(--trans);
+  /* Solo transform se anima: box-shadow/filter en la transition forzaban
+     repaint de área grande en cada tecla del mando (causa principal del
+     delay al moverse entre tarjetas). El resaltado dorado ahora es instantáneo. */
+  transition: transform var(--trans);
+  will-change: transform;
 }
 .card:focus, .card.focused {
   transform: scale(1.08) translateZ(0);
-  will-change: transform;
   box-shadow: 0 20px 56px rgba(0,0,0,0.85), 0 0 0 2px rgba(201,168,76,0.35), 0 0 30px rgba(201,168,76,0.18);
   z-index: 10;
 }
@@ -1699,7 +1702,7 @@ const DEMO_CATALOG = [
   h: "https://1a-1791.com/video/fwe2/f3/s8/2/m/Y/Y/4/mYY4z.aaa.mp4"
 },
 {
-  t: "Dragon Ball Z: La Fusión de Goku y Vegeta",
+  t: "Dragon Ball Z: Fusion Reborn",
   c: "anime",
   i: "https://image.tmdb.org/t/p/original/9hAgxPgaPHLGg9NUEGld194Ek05.jpg",
   h: "https://player.zilla-networks.com/m3u8/4e206d07be45216dfeb8e554aa378beb"
@@ -1799,6 +1802,12 @@ const DEMO_CATALOG = [
   c: "accion",
   i: "https://image.tmdb.org/t/p/original/cZsvmKZ8jBkXNn2m8cBfy8HTF96.jpg",
   h: "https://hugh.cdn.rumble.cloud/video/fwe2/22/s8/2/Y/8/I/n/Y8Inz.aaa.mp4"
+},
+{
+  t: "Depredador",
+  c: "ciencia ficcion",
+  i: "https://image.tmdb.org/t/p/original/7rVEwVy1oEllmFcHsdCJhAoKGRC.jpg",
+  h: "https://f004.backblazeb2.com/file/astrostudio-videos1/depredador-1987-%5Blatino%5D.mp4"
 },
 {
   t: "El muro negro",
