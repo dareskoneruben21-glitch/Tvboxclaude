@@ -453,6 +453,11 @@ html, body {
   transition: background 0.15s, transform 0.15s, opacity 0.2s, box-shadow 0.15s, border-color 0.15s;
 }
 #player-skip-intro-btn.visible { display: block; opacity: 1; animation: skipIntroIn 0.25s ease; }
+/* Se oculta junto con el resto de los controles del reproductor tras la
+   inactividad, y reaparece junto con ellos ante cualquier movimiento
+   (ver showControls() en JS). Independiente de si sigue vigente la
+   ventana de detección de intro (.visible). */
+#player-skip-intro-btn.visible.controls-hidden { opacity: 0; pointer-events: none; }
 #player-skip-intro-btn:hover {
   background: linear-gradient(135deg, rgba(45,40,28,0.82), rgba(20,18,13,0.86));
   border-color: rgba(201,168,76,0.7);
@@ -657,7 +662,10 @@ html, body {
 /* ===== MODAL DETAIL (info) ===== */
 #info-overlay {
   display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(10,10,15,0.85); backdrop-filter: blur(8px);
+  /* Sin backdrop-filter: el blur continuo sobre toda la pantalla es lo que
+     más pesa en GPUs débiles de TV box (mucho más que cualquier box-shadow).
+     Se compensa con un fondo más oscuro para mantener buen contraste. */
+  background: rgba(8,8,12,0.94);
   align-items: center; justify-content: center;
 }
 #info-overlay.visible { display: flex; }
@@ -2904,6 +2912,7 @@ function showSkipIntroBtn() {
   if (State.introBtnVisible) return;
   State.introBtnVisible = true;
   const btn = qs('#player-skip-intro-btn');
+  btn.classList.remove('controls-hidden');
   btn.classList.add('visible');
   if (!ZONES.player.includes(btn)) ZONES.player.splice(1, 0, btn);
 }
@@ -3145,10 +3154,12 @@ function pad(n) { return String(n).padStart(2, '0'); }
 function showControls() {
   qs('#player-controls').classList.remove('hidden');
   qs('#player-topbar').classList.remove('hidden');
+  qs('#player-skip-intro-btn').classList.remove('controls-hidden');
   clearTimeout(State.controlsTimer);
   State.controlsTimer = setTimeout(() => {
     qs('#player-controls').classList.add('hidden');
     qs('#player-topbar').classList.add('hidden');
+    qs('#player-skip-intro-btn').classList.add('controls-hidden');
   }, 4000);
 }
 
